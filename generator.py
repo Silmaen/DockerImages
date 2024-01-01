@@ -2,6 +2,7 @@
 """
 Simple Wrapper around docker command for image generation
 """
+from datetime import datetime
 from pathlib import Path
 from sys import stderr
 
@@ -302,8 +303,9 @@ def main():
     if args.namespace not in [None, ""]:
         namespace = args.namespace
 
+    nn = datetime.now()
     if tag in [None, ""]:
-        tag = get_git_hash()
+        tag = f"{nn.year}{nn.month}{nn.day}-{nn.hour}{nn.minute}-{get_git_hash()}"
     do_push = args.push
     dry_run = args.dry_run
     aliased = args.alias_latest

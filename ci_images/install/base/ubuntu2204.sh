@@ -32,13 +32,13 @@ install_package curl gpg ca-certificates
 update_package_list
 
 # Install base packages
-install_package python3 python3-lxml python3-jinja2 python3-pip python3-requests-toolbelt p7zip unzip time patchelf cmake cmake-data make ninja-build ccache doxygen graphviz mold gcovr
+install_package python3 python3-lxml python3-jinja2 python3-pip python3-requests-toolbelt p7zip unzip time patchelf cmake cmake-data make ninja-build ccache doxygen graphviz mold
 
 # create a default cache dir
 [ ! -e /tmp/cache_dir ] && install -d -m 0755 -o user -g user /tmp/cache_dir
 
 # install dependency manager
-pip install depmanager
+pip install depmanager gcovr
 
 # Install dev libraries
 install_package libx11-dev libgtk-3-dev libvulkan-dev
