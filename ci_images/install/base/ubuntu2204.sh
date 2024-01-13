@@ -41,7 +41,7 @@ install_package python3 python3-lxml python3-jinja2 python3-pip python3-requests
 pip install depmanager gcovr
 
 # Install dev libraries
-install_package libx11-dev libgtk-3-dev libvulkan-dev
+install_package libx11-dev libgtk-3-dev libssl-dev
 
 # Clear the caches
 clear_cache

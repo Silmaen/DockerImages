@@ -14,54 +14,54 @@ root_path = Path(__file__).resolve().parent
 ci_images_path = root_path / "ci_images"
 
 presets = {
-    "minimal"                   : {
+    "minimal": {
         "base_image": "ubuntu:22.04",
-        "setup"     : "ubuntu",
+        "setup": "ubuntu",
         "image_name": "minial-ubuntu2204",
-        "platform"  : ["linux/amd64", "linux/arm64"],
-        "location"  : root_path / "minimal",
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": root_path / "minimal",
     },
-    "base-ubuntu2204"           : {
+    "base-ubuntu2204": {
         "base_image": "ubuntu:22.04",
-        "setup"     : "base/ubuntu2204",
+        "setup": "base/ubuntu2204",
         "image_name": "base-ubuntu2204",
-        "platform"  : ["linux/amd64", "linux/arm64"],
-        "location"  : ci_images_path,
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
     },
-    "builder-gcc12-ubuntu2204"  : {
+    "builder-gcc12-ubuntu2204": {
         "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup"     : "builder/gcc-12",
+        "setup": "builder/gcc-12",
         "image_name": "builder-gcc12-ubuntu2204",
-        "platform"  : ["linux/amd64", "linux/arm64"],
-        "location"  : ci_images_path,
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
     },
     "builder-clang15-ubuntu2204": {
         "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup"     : "builder/clang-15",
+        "setup": "builder/clang-15",
         "image_name": "builder-clang15-ubuntu2204",
-        "platform"  : ["linux/amd64", "linux/arm64"],
-        "location"  : ci_images_path,
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
     },
-    "base-ubuntu2310"           : {
+    "base-ubuntu2310": {
         "base_image": "ubuntu:23.10",
-        "setup"     : "base/ubuntu2310",
+        "setup": "base/ubuntu2310",
         "image_name": "base-ubuntu2310",
-        "platform"  : ["linux/amd64", "linux/arm64"],
-        "location"  : ci_images_path,
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
     },
-    "builder-gcc13-ubuntu2310"  : {
+    "builder-gcc13-ubuntu2310": {
         "base_image": f"{registry}/{namespace}/base-ubuntu2310",
-        "setup"     : "builder/gcc-13",
+        "setup": "builder/gcc-13",
         "image_name": "builder-gcc13-ubuntu2310",
-        "platform"  : ["linux/amd64", "linux/arm64"],
-        "location"  : ci_images_path,
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
     },
     "builder-clang17-ubuntu2310": {
         "base_image": f"{registry}/{namespace}/base-ubuntu2310",
-        "setup"     : "builder/clang-17",
+        "setup": "builder/clang-17",
         "image_name": "builder-clang17-ubuntu2310",
-        "platform"  : ["linux/amd64", "linux/arm64"],
-        "location"  : ci_images_path,
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
     },
 }
 
@@ -149,14 +149,14 @@ def get_possible_platforms():
 
 
 def process(
-        base: str,
-        setup: str,
-        output: str,
-        tag: str,
-        platforms: list,
-        do_push: bool,
-        aliased: bool,
-        dockerfile_path: Path,
+    base: str,
+    setup: str,
+    output: str,
+    tag: str,
+    platforms: list,
+    do_push: bool,
+    aliased: bool,
+    dockerfile_path: Path,
 ):
     """
     Process the docker build command
@@ -198,70 +198,70 @@ def main():
     global dry_run, registry, namespace
     parser = ArgumentParser()
     parser.add_argument(
-            "-b",
-            "--base-image",
-            type=str,
-            default="",
-            help="Base image for the generation.",
+        "-b",
+        "--base-image",
+        type=str,
+        default="",
+        help="Base image for the generation.",
     )
     parser.add_argument(
-            "-s",
-            "--setup-file",
-            type=str,
-            default="",
-            help="Setup file for the generation.",
+        "-s",
+        "--setup-file",
+        type=str,
+        default="",
+        help="Setup file for the generation.",
     )
     parser.add_argument(
-            "-i",
-            "--image-name",
-            type=str,
-            default="",
-            help="Output image for the generation.",
+        "-i",
+        "--image-name",
+        type=str,
+        default="",
+        help="Output image for the generation.",
     )
     parser.add_argument(
-            "-p", "--platform", type=str, default="", help="Platform for the generation."
+        "-p", "--platform", type=str, default="", help="Platform for the generation."
     )
     parser.add_argument(
-            "-t", "--tag", type=str, default="", help="Tag for the generation."
+        "-t", "--tag", type=str, default="", help="Tag for the generation."
     )
     parser.add_argument(
-            "-l", "--location", type=str, default="", help="Location of the dockerfile."
+        "-l", "--location", type=str, default="", help="Location of the dockerfile."
     )
     parser.add_argument(
-            "--registry", type=str, default="", help="Registry for the generation."
+        "--registry", type=str, default="", help="Registry for the generation."
     )
     parser.add_argument(
-            "--namespace", type=str, default="", help="Namespace for the generation."
+        "--namespace", type=str, default="", help="Namespace for the generation."
     )
     parser.add_argument(
-            "--preset", type=str, default="", help="Preset name for the generation."
+        "--preset", type=str, default="", help="Preset name for the generation."
     )
     parser.add_argument(
-            "--push",
-            action="store_true",
-            default=False,
-            help="Push images to the repository.",
+        "--push",
+        action="store_true",
+        default=False,
+        help="Push images to the repository.",
     )
     parser.add_argument(
-            "--clean", action="store_true", default=False, help="CleanUp build at the end."
+        "--clean", action="store_true", default=False, help="CleanUp build at the end."
     )
     parser.add_argument(
-            "--full-clean",
-            action="store_true",
-            default=False,
-            help="Clean everything in docker before and after the build.",
+        "--full-clean",
+        action="store_true",
+        default=False,
+        help="Clean everything in docker before and after the build.",
     )
     parser.add_argument(
-            "--alias-latest",
-            action="store_true",
-            default=False,
-            help="If the builds should also tag as latest.",
+        "--alias-latest",
+        action="store_true",
+        default=False,
+        help="If the builds should also tag as latest.",
     )
     parser.add_argument(
-            "--dry-run",
-            action="store_true",
-            default=False,
-            help="Only print command not doing it.",
+        "--dry-run",
+        action="store_true",
+        default=False,
+        help="Only print command not doing it.",
     )
     args = parser.parse_args()
 
@@ -317,12 +317,12 @@ def main():
     for platform in platforms:
         if platform not in p_platforms:
             print(
-                    f"ERROR: Unsupported platform {platform}. possibles are: {p_platforms}",
-                    file=stderr,
+                f"ERROR: Unsupported platform {platform}. possibles are: {p_platforms}",
+                file=stderr,
             )
             exit(-666)
     print(
-            f"Generating docker images {registry}/{namespace}/{base_image}:{tag} for the platforms {platforms}."
+        f"Generating docker images {registry}/{namespace}/{base_image}:{tag} for the platforms {platforms}."
     )
 
     if args.full_clean:
