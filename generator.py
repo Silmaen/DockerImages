@@ -141,6 +141,29 @@ def get_possible_platforms():
     return []
 
 
+def get_current_driver():
+    """
+    Determine the possible platform for build.
+    :return: The list of possible platforms.
+    """
+    out = run_command("docker buildx inspect --bootstrap", output=True, forced=True)
+    for line in out.splitlines():
+        if not line.startswith("Driver"):
+            continue
+        return line.split(":")[-1].strip()
+    return []
+
+
+def start_builder():
+    """
+    Checks current builder's driver. Eventually start a builder that support multi architecture.
+    :return: True if multi architecture enabled.
+    """
+    if get_current_driver() != "docker-container":
+        run_command("docker buildx create --use --driver docker-container")
+    return get_current_driver() == "docker-container"
+
+
 def process(
     base: str,
     setup: str,
@@ -152,7 +175,7 @@ def process(
     dockerfile_path: Path,
 ):
     """
-    Process the docker build command
+    Process the docker build command.
     :param base: Base image
     :param setup: Setup file
     :param output: Image Name
@@ -322,6 +345,7 @@ def main():
         clean_docker()
     elif args.clean:
         clean_docker_build()
+    start_builder()
     process(base_image, setup, output, tag, platforms, do_push, aliased, location)
     if args.full_clean or args.clean:
         clean_docker_build()
