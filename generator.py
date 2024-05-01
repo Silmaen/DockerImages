@@ -14,17 +14,17 @@ root_path = Path(__file__).resolve().parent
 ci_images_path = root_path / "ci_images"
 
 presets = {
-    "minimal": {
-        "base_image": "ubuntu:22.04",
-        "setup": "ubuntu",
-        "image_name": "minial-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": root_path / "minimal",
-    },
     "base-ubuntu2204": {
         "base_image": "ubuntu:22.04",
         "setup": "base/ubuntu2204",
         "image_name": "base-ubuntu2204",
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
+    },
+    "base-ubuntu2404": {
+        "base_image": "ubuntu:24.04",
+        "setup": "base/ubuntu2404",
+        "image_name": "base-ubuntu2404",
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
@@ -42,24 +42,17 @@ presets = {
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
-    "base-ubuntu2310": {
-        "base_image": "ubuntu:23.10",
-        "setup": "base/ubuntu2310",
-        "image_name": "base-ubuntu2310",
+    "builder-gcc14-ubuntu2404": {
+        "base_image": f"{registry}/{namespace}/base-ubuntu2404",
+        "setup": "builder/gcc-14",
+        "image_name": "builder-gcc14-ubuntu2204",
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
-    "builder-gcc13-ubuntu2310": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2310",
-        "setup": "builder/gcc-13",
-        "image_name": "builder-gcc13-ubuntu2310",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-clang17-ubuntu2310": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2310",
-        "setup": "builder/clang-17",
-        "image_name": "builder-clang17-ubuntu2310",
+    "builder-clang18-ubuntu2404": {
+        "base_image": f"{registry}/{namespace}/base-ubuntu2404",
+        "setup": "builder/clang-18",
+        "image_name": "builder-clang18-ubuntu2204",
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },

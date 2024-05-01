@@ -18,12 +18,11 @@ function clear_cache() {
 update_package_list
 
 # Install base packages
-install_package {clang,lld}-17 clang-tidy-17
+install_package g++-14
 
-update-alternatives --install /usr/bin/lld lld /usr/bin/lld-17 17
-update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 17
-update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 17
-update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-17 17
+update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-14 14
+update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14
+update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14
 
 # Clear the caches
 clear_cache

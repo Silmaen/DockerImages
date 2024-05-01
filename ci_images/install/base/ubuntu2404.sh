@@ -21,7 +21,7 @@ ln -fs /usr/share/zoneinfo/Europe/Paris /etc/localtime
 useradd -m user
 
 # update package list
-#update_package_list
+update_package_list
 
 #install_package curl gpg ca-certificates
 
@@ -29,7 +29,7 @@ useradd -m user
 #. /etc/os-release && curl -s https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor - > /usr/share/keyrings/kitware-archive-keyring.gpg \
 #&& echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ ${UBUNTU_CODENAME} main" > /etc/apt/sources.list.d/kitware.list
 
-update_package_list
+#update_package_list
 
 # Install base packages
 install_package python3 python3-future python3-lxml python3-jinja2 python3-pip python3-requests-toolbelt p7zip unzip time patchelf cmake cmake-data make ninja-build ccache doxygen graphviz mold gcovr git
