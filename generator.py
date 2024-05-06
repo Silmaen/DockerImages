@@ -45,14 +45,14 @@ presets = {
     "builder-gcc14-ubuntu2404": {
         "base_image": f"{registry}/{namespace}/base-ubuntu2404",
         "setup": "builder/gcc-14",
-        "image_name": "builder-gcc14-ubuntu2204",
+        "image_name": "builder-gcc14-ubuntu2404",
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
     "builder-clang18-ubuntu2404": {
         "base_image": f"{registry}/{namespace}/base-ubuntu2404",
         "setup": "builder/clang-18",
-        "image_name": "builder-clang18-ubuntu2204",
+        "image_name": "builder-clang18-ubuntu2404",
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
@@ -321,7 +321,7 @@ def main():
 
     nn = datetime.now()
     if tag in [None, ""]:
-        tag = f"{nn.year}{nn.month}{nn.day}-{nn.hour}{nn.minute}-{get_git_hash()}"
+        tag = f"{nn.year}{['', '0'][nn.month < 10]}{nn.month}{['', '0'][nn.day < 10]}{nn.day}-{['', '0'][nn.hour < 10]}{nn.hour}{['', '0'][nn.minute < 10]}{nn.minute}-{get_git_hash()}"
     do_push = args.push
     dry_run = args.dry_run
     aliased = args.alias_latest
