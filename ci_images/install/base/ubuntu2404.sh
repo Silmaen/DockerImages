@@ -17,6 +17,8 @@ function clear_cache() {
 #set time zone
 ln -fs /usr/share/zoneinfo/Europe/Paris /etc/localtime
 
+# Remove default user
+userdel -r ubuntu
 # Create a user
 useradd -m user
 
