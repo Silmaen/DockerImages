@@ -186,10 +186,12 @@ def process(
     :param dockerfile_path: Path to the Dockerfile to use.
     """
     try:
+        full_image = f"{registry}/{namespace}/{output}"
         # force re-pull base image (in case of updates)
+        if aliased:
+            run_command(f"docker image rm {full_image}:latest")
         run_command(f"docker pull {base}")
         # build image
-        full_image = f"{registry}/{namespace}/{output}"
         if tag not in [None, ""]:
             image_tags = f" -t {full_image}:{tag}"
             if aliased:
