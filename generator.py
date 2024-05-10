@@ -59,7 +59,7 @@ presets = {
 }
 
 
-def run_command(cmd: str, output: bool = False, forced: bool = False):
+def run_command(cmd: str, output: bool = False, forced: bool = False, try_run: bool = False):
     """
     Simple wrapper to safely run commands.
     :param cmd: The command to execute.
@@ -81,13 +81,19 @@ def run_command(cmd: str, output: bool = False, forced: bool = False):
             else:
                 ret = run(cmd, shell=True)
             if ret.returncode != 0:
-                print(f"ERROR: '{cmd}' Error code : {ret.returncode}.", file=stderr)
-                exit(-666)
+                if not try_run:
+                    print(f"ERROR: '{cmd}' Error code : {ret.returncode}.", file=stderr)
+                    exit(-666)
+                else:
+                    print(f"WARNING: '{cmd}' Error code : {ret.returncode}.", file=stderr)
             if output:
                 return ret.stdout.decode().strip()
     except Exception as err:
-        print(f"ERROR: Exception during '{cmd}': {err}.", file=stderr)
-        exit(-666)
+        if not try_run:
+            print(f"ERROR: Exception during '{cmd}': {err}.", file=stderr)
+            exit(-666)
+        else:
+            print(f"WARNING: Exception during '{cmd}': {err}.", file=stderr)
 
 
 def get_git_hash():
@@ -102,7 +108,8 @@ def clean_docker_build():
     """
     Clean the build cache of docker
     """
-    run_command("docker builder prune -a -f")
+    run_command("docker builder prune -a -f --verbose")
+    run_command("docker buildx prune -a -f --verbose")
 
 
 def clean_docker():
@@ -186,12 +193,10 @@ def process(
     :param dockerfile_path: Path to the Dockerfile to use.
     """
     try:
-        full_image = f"{registry}/{namespace}/{output}"
         # force re-pull base image (in case of updates)
-        if aliased:
-            run_command(f"docker image rm {full_image}:latest")
         run_command(f"docker pull {base}")
         # build image
+        full_image = f"{registry}/{namespace}/{output}"
         if tag not in [None, ""]:
             image_tags = f" -t {full_image}:{tag}"
             if aliased:
