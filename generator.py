@@ -186,6 +186,9 @@ def process(
     :param dockerfile_path: Path to the Dockerfile to use.
     """
     try:
+        # force re-pull base image (in case of updates)
+        run_command(f"docker pull {base}")
+        # build image
         full_image = f"{registry}/{namespace}/{output}"
         if tag not in [None, ""]:
             image_tags = f" -t {full_image}:{tag}"
