@@ -18,12 +18,13 @@ function clear_cache() {
 update_package_list
 
 # Install base packages
-install_package {clang,lld}-18 clang-tidy-18
+install_package {clang,lld,llvm}-18 clang-tidy-18 libclang-rt-18-dev
 
 update-alternatives --install /usr/bin/lld lld /usr/bin/lld-18 18
 update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 18
 update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 18
 update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 18
+update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-18 18
 
 # Clear the caches
 clear_cache
