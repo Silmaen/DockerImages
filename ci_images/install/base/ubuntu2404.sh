@@ -37,5 +37,8 @@ pip install depmanager --break-system-packages
 # Install dev libraries
 install_package libx11-dev libgtk-3-dev libssl-dev
 
+# Install dev libraries for sound
+install_package libasound2-dev libpulse-dev libpipewire-0.3-dev libjack-dev portaudio19-dev libmysofa-dev libsndfile1-dev
+
 # Clear the caches
 clear_cache
