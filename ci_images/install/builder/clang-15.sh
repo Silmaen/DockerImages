@@ -18,7 +18,7 @@ function clear_cache() {
 update_package_list
 
 # Install base packages
-install_package {clang,lld,llvm}-15 libstdc++-12-dev clang-tidy-15 libclang-rt-15-dev
+install_package {clang,lld,llvm}-15 libstdc++-12-dev clang-tidy-15 libclang*-15-dev
 
 update-alternatives --install /usr/bin/lld lld /usr/bin/lld-15 15
 update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 15
