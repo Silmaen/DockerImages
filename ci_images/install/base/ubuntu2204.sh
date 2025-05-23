@@ -26,7 +26,7 @@ update_package_list
 install_package curl gpg ca-certificates
 
 # Add kitware repo for cmake
-. /etc/os-release && curl -s https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o > /usr/share/keyrings/kitware-archive-keyring.gpg \
+. /etc/os-release && curl -s https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg \
 && echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ ${UBUNTU_CODENAME} main" > /etc/apt/sources.list.d/kitware.list
 
 update_package_list
