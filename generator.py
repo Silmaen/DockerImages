@@ -14,13 +14,6 @@ root_path = Path(__file__).resolve().parent
 ci_images_path = root_path / "ci_images"
 
 presets = {
-    "base-ubuntu2204": {
-        "base_image": "ubuntu:22.04",
-        "setup": "base/ubuntu2204",
-        "image_name": "base-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
     "base-ubuntu2404": {
         "base_image": "ubuntu:24.04",
         "setup": "base/ubuntu2404",
@@ -81,6 +74,23 @@ presets = {
         "base_image": f"{registry}/{namespace}/base-ubuntu2204",
         "setup": "builder/clang-llvm-20",
         "image_name": "builder-clang-llvm20-ubuntu2204",
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
+    },
+    "devel-clang-llvm20-ubuntu2204": {
+        "base_image": f"{registry}/{namespace}/builder-clang-llvm20-ubuntu2204",
+        "setup": "devel/clang-llvm-20",
+        "image_name": "devel-clang-llvm20-ubuntu2204",
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
+    },
+    #
+    # UBUNTU 24.04
+    #
+    "base-ubuntu2204": {
+        "base_image": "ubuntu:22.04",
+        "setup": "base/ubuntu2204",
+        "image_name": "base-ubuntu2204",
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
