@@ -6,7 +6,7 @@ set -e
 CLANG_VERSION=20
 
 function update_package_list() {
-  DEBIAN_FRONTEND=noninteractive apt -o Acquire::AllowInsecureRepositories=true -o Acquire::AllowUnauthenticated=true update
+  DEBIAN_FRONTEND=noninteractive apt update
 }
 function install_package() {
   DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y $@
