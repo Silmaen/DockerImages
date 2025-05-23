@@ -22,8 +22,15 @@ echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] https://apt.l
 # update package list
 update_package_list
 
-# Install base packages
-install_package {clang,lld,llvm,clang-tidy}-${CLANG_VERSION} libclang*-${CLANG_VERSION}-dev
+# Install compiler packages
+STDCPP_VER=$(apt-cache search --names-only '^libstdc\+\+-[0-9]+-dev$' | \
+  grep -o 'libstdc++-[0-9]\+-dev' | sort -V | tail -n1 | grep -o '[0-9]\+')
+
+install_package  {clang,lld,llvm,clang-tidy}-${CLANG_VERSION} libclang*-${CLANG_VERSION}-dev lib{c++,c++abi,unwind}-${CLANG_VERSION}-dev
+
+install_package libstdc++-${STDCPP_VER}-dev
+ln -sf /usr/include/c++/${STDCPP_VER} /usr/include/c++/default
+ln -sf /usr/lib/gcc/x86_64-linux-gnu/${STDCPP_VER}/libstdc++.so /usr/lib/libstdc++.so
 
 update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${CLANG_VERSION} ${CLANG_VERSION}
 update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${CLANG_VERSION} ${CLANG_VERSION}

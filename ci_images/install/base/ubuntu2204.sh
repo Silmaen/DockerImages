@@ -23,6 +23,8 @@ useradd -m user
 # update package list
 update_package_list
 
+install_package software-properties-common gpg-agent
+add-apt-repository ppa:ubuntu-toolchain-r/test
 install_package curl gpg ca-certificates
 
 # Add kitware repo for cmake
@@ -34,7 +36,7 @@ update_package_list
 # Install base packages
 install_package python3 python3-future python3-lxml python3-jinja2 python3-pip python3-requests-toolbelt \
                 p7zip unzip ccache doxygen graphviz mold git \
-                time patchelf cmake cmake-data make ninja-build gcovr
+                time patchelf cmake cmake-data make ninja-build
 
 # Install dev libraries
 install_package libx11-dev libgtk-3-dev libssl-dev
@@ -43,7 +45,7 @@ install_package libx11-dev libgtk-3-dev libssl-dev
 install_package libasound2-dev libpulse-dev libpipewire-0.3-dev libjack-dev portaudio19-dev libmysofa-dev libsndfile1-dev
 
 # install dependency manager
-pip install depmanager
+pip install depmanager gcovr
 
 # create a default cache dir
 [ ! -e /tmp/cache_dir ] && install -d -m 0755 -o user -g user /tmp/cache_dir
