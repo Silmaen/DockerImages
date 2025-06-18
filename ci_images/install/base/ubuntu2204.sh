@@ -45,6 +45,7 @@ install_package libx11-dev libgtk-3-dev libssl-dev
 install_package libasound2-dev libpulse-dev libpipewire-0.3-dev libjack-dev portaudio19-dev libmysofa-dev libsndfile1-dev
 
 # install dependency manager
+python3 -m pip install --upgrade pip
 pip install depmanager gcovr
 
 # create a default cache dir
