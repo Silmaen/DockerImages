@@ -36,7 +36,7 @@ update_package_list
 # Install base packages
 install_package python3 python3-future python3-lxml python3-jinja2 python3-pip python3-requests-toolbelt \
                 p7zip unzip ccache doxygen graphviz mold git \
-                time patchelf cmake cmake-data make ninja-build
+                time patchelf cmake cmake-data make
 
 # Install dev libraries
 install_package libx11-dev libgtk-3-dev libssl-dev
@@ -44,9 +44,12 @@ install_package libx11-dev libgtk-3-dev libssl-dev
 # Install dev libraries for sound
 install_package libasound2-dev libpulse-dev libpipewire-0.3-dev libjack-dev portaudio19-dev libmysofa-dev libsndfile1-dev
 
+# Install dev libraries for vulkan
+install_package libvulkan-dev libvulkan1 vulkan-tools mesa-vulkan-drivers vulkan-validationlayers libglfw3-dev
+
 # install dependency manager
 python3 -m pip install --upgrade pip
-pip install depmanager gcovr
+pip install --no-cache-dir depmanager gcovr ninja
 
 # create a default cache dir
 [ ! -e /tmp/cache_dir ] && install -d -m 0755 -o user -g user /tmp/cache_dir
