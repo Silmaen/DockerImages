@@ -42,13 +42,6 @@ presets = {
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
-    "builder-clang-llvm15-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup": "builder/clang-llvm-15",
-        "image_name": "builder-clang-llvm15-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
     "builder-clang-llvm16-ubuntu2204": {
         "base_image": f"{registry}/{namespace}/base-ubuntu2204",
         "setup": "builder/clang-llvm-16",
@@ -84,6 +77,13 @@ presets = {
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
+    "devel-clang-llvm18-ubuntu2204": {
+        "base_image": f"{registry}/{namespace}/builder-clang-llvm18-ubuntu2204",
+        "setup": "devel/clang-llvm-18",
+        "image_name": "devel-clang-llvm18-ubuntu2204",
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
+    },
     "devel-clang-llvm20-ubuntu2204": {
         "base_image": f"{registry}/{namespace}/builder-clang-llvm20-ubuntu2204",
         "setup": "devel/clang-llvm-20",
@@ -91,10 +91,10 @@ presets = {
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
-    "devel-clang-llvm18-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/builder-clang-llvm18-ubuntu2204",
-        "setup": "devel/clang-llvm-18",
-        "image_name": "devel-clang-llvm18-ubuntu2204",
+    "devel-clang-llvm21-ubuntu2204": {
+        "base_image": f"{registry}/{namespace}/builder-clang-llvm21-ubuntu2204",
+        "setup": "devel/clang-llvm-21",
+        "image_name": "devel-clang-llvm21-ubuntu2204",
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
@@ -329,6 +329,10 @@ def main():
         "--preset", type=str, default="", help="Preset name for the generation."
     )
     parser.add_argument(
+        "--all-preset", action="store_true",
+        default=False, help="Build all known presets, also implies '--push and '--alias-latest'."
+    )
+    parser.add_argument(
         "--push",
         action="store_true",
         default=False,
@@ -363,6 +367,13 @@ def main():
     platforms = []
     tag = ""
     location = ci_images_path
+
+    if args.all_preset:
+        if args.preset not in [None, ""] or args.base_image not in [None, ""] or args.setup_file not in [None, ""] or args.image_name not in [None, ""]:
+            print("ERROR: --all-preset cannot be used with other image selection options.", file=stderr)
+            return -1
+
+
 
     if args.preset not in [None, ""]:
         if args.preset in presets.keys():
@@ -422,7 +433,17 @@ def main():
     elif args.clean:
         clean_docker_build()
     start_builder()
-    process(base_image, setup, output, tag, platforms, do_push, aliased, location)
+    if args.all_preset:
+        for preset in presets.keys():
+            print(f"Processing preset '{preset}'...")
+            base_image = presets[preset]["base_image"]
+            setup = presets[preset]["setup"]
+            output = presets[preset]["image_name"]
+            platforms = presets[preset]["platform"]
+            location = presets[preset]["location"].resolve()
+            process(base_image, setup, output, tag, platforms, True, True, location)
+    else:
+        process(base_image, setup, output, tag, platforms, do_push, aliased, location)
     if args.full_clean or args.clean:
         clean_docker_build()
     return 0

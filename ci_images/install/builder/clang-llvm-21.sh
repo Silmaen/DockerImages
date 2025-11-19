@@ -3,7 +3,7 @@
 # Stop if error
 set -e
 
-CLANG_VERSION=15
+CLANG_VERSION=21
 
 function update_package_list() {
   DEBIAN_FRONTEND=noninteractive apt update
