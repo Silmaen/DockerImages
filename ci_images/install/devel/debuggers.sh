@@ -18,11 +18,7 @@ function clear_cache() {
 update_package_list
 
 # Install base packages
-install_package g++-12
-
-update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-12 12
-update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
-update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12
+install_package lldb gdb valgrind gperf
 
 # Clear the caches
 clear_cache

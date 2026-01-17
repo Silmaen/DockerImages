@@ -122,6 +122,13 @@ presets = {
         "platform": ["linux/amd64", "linux/arm64"],
         "location": ci_images_path,
     },
+    "devel-clang18-ubuntu2404": {
+        "base_image": f"{registry}/{namespace}/builder-clang18-ubuntu2404",
+        "setup": "devel/debuggers",
+        "image_name": "devel-clang18-ubuntu2404",
+        "platform": ["linux/amd64", "linux/arm64"],
+        "location": ci_images_path,
+    },
 }
 
 

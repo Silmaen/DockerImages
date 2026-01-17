@@ -7,7 +7,7 @@ function update_package_list() {
   DEBIAN_FRONTEND=noninteractive apt update
 }
 function install_package() {
-  DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y $@
+  DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y "$@"
 }
 function clear_cache() {
   DEBIAN_FRONTEND=noninteractive apt autoremove

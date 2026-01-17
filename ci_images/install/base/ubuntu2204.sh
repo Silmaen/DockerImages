@@ -7,7 +7,7 @@ function update_package_list() {
   DEBIAN_FRONTEND=noninteractive apt update
 }
 function install_package() {
-  DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y $@
+  DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y "$@"
 }
 function clear_cache() {
   DEBIAN_FRONTEND=noninteractive apt autoremove
@@ -33,10 +33,13 @@ install_package curl gpg ca-certificates
 
 update_package_list
 
+install_package ca-certificates
+update-ca-certificates
+
 # Install base packages
 install_package python3 python3-future python3-lxml python3-jinja2 python3-pip python3-requests-toolbelt \
                 p7zip unzip ccache doxygen graphviz mold git \
-                time patchelf cmake cmake-data make
+                time patchelf cmake cmake-data make curl ninja-build
 
 # Install dev libraries
 install_package libx11-dev libgtk-3-dev libssl-dev
@@ -49,10 +52,17 @@ install_package libvulkan-dev libvulkan1 vulkan-tools mesa-vulkan-drivers vulkan
 
 # install dependency manager
 python3 -m pip install --upgrade pip
-pip install --no-cache-dir depmanager gcovr ninja
+pip install --no-cache-dir depmanager
+curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/poetry python3 -
+
+# Declare python3 as default interpreter
+ln -sf /usr/bin/python3 /usr/bin/python
 
 # create a default cache dir
 [ ! -e /tmp/cache_dir ] && install -d -m 0755 -o user -g user /tmp/cache_dir
+
+# setup the locales
+locale-gen C.UTF-8 en_US.UTF-8 || true
 
 # Clear the caches
 clear_cache
