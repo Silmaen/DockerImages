@@ -81,8 +81,13 @@ clear_cache
 
 - `set -e` en tête.
 - `--no-install-recommends` (fourni par `install_package`).
-- **Pas de chemin arch-spécifique hardcodé**. Utiliser `$(clang -print-multiarch)`
-  ou `$(dpkg-architecture -qDEB_HOST_MULTIARCH)`.
+- **Pas de chemin arch-spécifique hardcodé**. Options par ordre de robustesse :
+  - Glob filesystem : `ls /usr/lib/gcc/*-linux-gnu/${N}/libstdc++.so` (marche
+    partout, toutes versions clang) ← **préféré** quand on a un point d'ancrage
+    connu (fichier installé).
+  - `$(dpkg-architecture -qDEB_HOST_MULTIARCH)` si `dpkg-dev` est installé.
+  - `$(clang -print-multiarch)` ← **à éviter** : l'option n'existe que depuis
+    LLVM 19, cf B-02 dans `BUGS.md`.
 - Codename distro : `${UBUNTU_CODENAME:-${VERSION_CODENAME}}` (le fallback gère Debian).
 - Ne pas réinstaller les outils déjà posés par `_common/builder.sh`. Ne pas réajouter
   `apt.llvm.org` ou Kitware dans un script qui le reçoit déjà via son parent.

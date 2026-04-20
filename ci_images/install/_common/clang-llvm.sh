@@ -29,9 +29,19 @@ install_package  {clang,lld,llvm,clang-tidy}-${CLANG_VERSION} \
                  lib{c++,c++abi,unwind}-${CLANG_VERSION}-dev
 
 install_package libstdc++-${STDCPP_VER}-dev
-MULTIARCH=$(clang-${CLANG_VERSION} -print-multiarch)
+
+# Resolve the libstdc++.so shipped by libstdc++-${STDCPP_VER}-dev via a glob on
+# the filesystem — works on any arch (x86_64-linux-gnu, aarch64-linux-gnu, ...)
+# and on any clang version (note: `clang -print-multiarch` only exists since
+# LLVM 19, so it cannot be used here).
+LIBSTDCPP_SO=$(ls /usr/lib/gcc/*-linux-gnu/${STDCPP_VER}/libstdc++.so 2>/dev/null | head -n1)
+if [[ -z "$LIBSTDCPP_SO" ]]; then
+  echo "ERROR: libstdc++-${STDCPP_VER}-dev did not provide the expected libstdc++.so" >&2
+  exit 1
+fi
+
 ln -sf /usr/include/c++/${STDCPP_VER} /usr/include/c++/default
-ln -sf /usr/lib/gcc/${MULTIARCH}/${STDCPP_VER}/libstdc++.so /usr/lib/libstdc++.so
+ln -sf "$LIBSTDCPP_SO" /usr/lib/libstdc++.so
 
 update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${CLANG_VERSION} ${CLANG_VERSION}
 update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${CLANG_VERSION} ${CLANG_VERSION}

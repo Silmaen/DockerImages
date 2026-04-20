@@ -39,43 +39,19 @@ presets = {
     "base-ubuntu2204":
         _preset("base-ubuntu2204",             "ubuntu:22.04",         "base/ubuntu2204"),
 
-    "builder-gcc12-ubuntu2204":
-        _preset("builder-gcc12-ubuntu2204",    "base-ubuntu2204",      "builder/gcc-12"),
     "builder-gcc13-ubuntu2204":
         _preset("builder-gcc13-ubuntu2204",    "base-ubuntu2204",      "builder/gcc-13"),
     "builder-clang15-ubuntu2204":
         _preset("builder-clang15-ubuntu2204",  "base-ubuntu2204",      "builder/clang-15"),
-    "builder-clang-llvm16-ubuntu2204":
-        _preset("builder-clang-llvm16-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-16"),
-    "builder-clang-llvm17-ubuntu2204":
-        _preset("builder-clang-llvm17-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-17"),
     "builder-clang-llvm18-ubuntu2204":
         _preset("builder-clang-llvm18-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-18"),
-    "builder-clang-llvm19-ubuntu2204":
-        _preset("builder-clang-llvm19-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-19"),
-    "builder-clang-llvm20-ubuntu2204":
-        _preset("builder-clang-llvm20-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-20"),
-    "builder-clang-llvm21-ubuntu2204":
-        _preset("builder-clang-llvm21-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-21"),
 
-    "devel-gcc12-ubuntu2204":
-        _preset("devel-gcc12-ubuntu2204",      "builder-gcc12-ubuntu2204",      "devel/gcc"),
     "devel-gcc13-ubuntu2204":
         _preset("devel-gcc13-ubuntu2204",      "builder-gcc13-ubuntu2204",      "devel/gcc"),
     "devel-clang15-ubuntu2204":
         _preset("devel-clang15-ubuntu2204",    "builder-clang15-ubuntu2204",    "devel/clang-15"),
-    "devel-clang-llvm16-ubuntu2204":
-        _preset("devel-clang-llvm16-ubuntu2204", "builder-clang-llvm16-ubuntu2204", "devel/clang-llvm-16"),
-    "devel-clang-llvm17-ubuntu2204":
-        _preset("devel-clang-llvm17-ubuntu2204", "builder-clang-llvm17-ubuntu2204", "devel/clang-llvm-17"),
     "devel-clang-llvm18-ubuntu2204":
         _preset("devel-clang-llvm18-ubuntu2204", "builder-clang-llvm18-ubuntu2204", "devel/clang-llvm-18"),
-    "devel-clang-llvm19-ubuntu2204":
-        _preset("devel-clang-llvm19-ubuntu2204", "builder-clang-llvm19-ubuntu2204", "devel/clang-llvm-19"),
-    "devel-clang-llvm20-ubuntu2204":
-        _preset("devel-clang-llvm20-ubuntu2204", "builder-clang-llvm20-ubuntu2204", "devel/clang-llvm-20"),
-    "devel-clang-llvm21-ubuntu2204":
-        _preset("devel-clang-llvm21-ubuntu2204", "builder-clang-llvm21-ubuntu2204", "devel/clang-llvm-21"),
 
     #
     # UBUNTU 24.04

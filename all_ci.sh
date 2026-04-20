@@ -14,28 +14,16 @@ set -e
 ./generator.py --preset base-ubuntu2204 --push --alias-latest
 
 # GCC builders
-./generator.py --preset builder-gcc12-ubuntu2204 --push --alias-latest
 ./generator.py --preset builder-gcc13-ubuntu2204 --push --alias-latest
 
 # Clang builders (distro + apt.llvm.org variants)
 ./generator.py --preset builder-clang15-ubuntu2204 --push --alias-latest
-./generator.py --preset builder-clang-llvm16-ubuntu2204 --push --alias-latest
-./generator.py --preset builder-clang-llvm17-ubuntu2204 --push --alias-latest
 ./generator.py --preset builder-clang-llvm18-ubuntu2204 --push --alias-latest
-./generator.py --preset builder-clang-llvm19-ubuntu2204 --push --alias-latest
-./generator.py --preset builder-clang-llvm20-ubuntu2204 --push --alias-latest
-./generator.py --preset builder-clang-llvm21-ubuntu2204 --push --alias-latest
 
 # Devel (must come after their respective builder)
-./generator.py --preset devel-gcc12-ubuntu2204 --push --alias-latest
 ./generator.py --preset devel-gcc13-ubuntu2204 --push --alias-latest
 ./generator.py --preset devel-clang15-ubuntu2204 --push --alias-latest
-./generator.py --preset devel-clang-llvm16-ubuntu2204 --push --alias-latest
-./generator.py --preset devel-clang-llvm17-ubuntu2204 --push --alias-latest
 ./generator.py --preset devel-clang-llvm18-ubuntu2204 --push --alias-latest
-./generator.py --preset devel-clang-llvm19-ubuntu2204 --push --alias-latest
-./generator.py --preset devel-clang-llvm20-ubuntu2204 --push --alias-latest
-./generator.py --preset devel-clang-llvm21-ubuntu2204 --push --alias-latest
 
 # ============================================================
 # Ubuntu 24.04 family

@@ -32,7 +32,7 @@ Le nom d'un autre fichier était collé devant le shebang.
 
 ---
 
-### B-02 — Chemin libstdc++ hardcodé `x86_64-linux-gnu` → casse arm64 — **RÉSOLU**
+### B-02 — Chemin libstdc++ hardcodé `x86_64-linux-gnu` → casse arm64 — **RÉSOLU (2ᵉ passe)**
 
 **Fichiers concernés** :
 
@@ -45,9 +45,18 @@ Le nom d'un autre fichier était collé devant le shebang.
 
 Le triplet était figé → `libstdc++.so` symlink cassé en `linux/arm64`.
 
-**Correctif appliqué** : détection runtime du triplet via
-`MULTIARCH=$(clang-${CLANG_VERSION} -print-multiarch)` (clang est déjà installé à ce
-stade), puis `ln -sf /usr/lib/gcc/${MULTIARCH}/${STDCPP_VER}/libstdc++.so ...`.
+**1ʳᵉ tentative (non retenue)** : `MULTIARCH=$(clang-${CLANG_VERSION} -print-multiarch)`.
+Échoue à l'exécution pour clang-16/17/18 : l'option `-print-multiarch` n'existe que
+depuis LLVM 19 (`clang: error: unsupported option '-print-multiarch'`).
+
+**Correctif appliqué (retenu)** : résolution du chemin via glob filesystem,
+indépendante de l'archi **et** de la version de clang :
+
+```bash
+LIBSTDCPP_SO=$(ls /usr/lib/gcc/*-linux-gnu/${STDCPP_VER}/libstdc++.so 2>/dev/null | head -n1)
+```
+
+Centralisé dans `install/_common/clang-llvm.sh` (après le refactor profond).
 
 ---
 
