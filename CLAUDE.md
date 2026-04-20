@@ -229,6 +229,12 @@ Préfixe `clang-N` (sans `llvm`) = paquet natif de la distro.
 - **Pas de `docker push` / `git push`** sans demande explicite.
 - **Pas de `git reset --hard`, `prune -a`, force-push** sans demande explicite.
 - Les commits respectent le style terse observé dans le log (`ef9c927 improved images`).
+- **`CHANGELOG.md` à jour** : dès qu'un changement est observable côté image
+  (ajout/suppression de preset, modif d'un script d'install, modif de
+  `generator.py` ou `all_ci.sh`, bugfix), ajoute une entrée sous `## [Unreleased]`
+  dans la sous-section adaptée (`Added`, `Changed`, `Fixed`, `Removed`,
+  `Deprecated`, `Security`). Les modifs purement internes (doc, CI, refactor
+  sans impact sur l'image produite) peuvent s'en dispenser.
 
 ---
 

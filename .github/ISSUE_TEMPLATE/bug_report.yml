@@ -1,0 +1,74 @@
+name: Bug report
+description: Signaler un problème avec une image, le generator, ou le build
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Description
+      description: Quel est le comportement observé ? Quel était le comportement attendu ?
+      placeholder: |
+        Le build de `builder-clang-llvm18-ubuntu2204` échoue en arm64 avec ...
+    validations:
+      required: true
+
+  - type: input
+    id: image
+    attributes:
+      label: Image concernée
+      description: Nom + tag (ou `latest`)
+      placeholder: "registry.argawaen.net/builder/builder-clang-llvm18-ubuntu2204:latest"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: arch
+    attributes:
+      label: Architecture
+      options:
+        - linux/amd64
+        - linux/arm64
+        - les deux
+        - N/A
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Étapes de reproduction
+      description: Commande(s) exacte(s) à lancer depuis une copie de ce repo.
+      placeholder: |
+        1. ./generator.py --preset builder-clang-llvm18-ubuntu2204
+        2. ...
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / erreurs
+      description: |
+        Sortie pertinente de la commande.
+        Inclure le message d'erreur complet, pas une paraphrase.
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: host
+    attributes:
+      label: Hôte de build
+      description: OS + kernel + version de Docker
+      placeholder: "Ubuntu 24.04, kernel 6.8, Docker 27.x, buildx 0.14"
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Vérifications préalables
+      options:
+        - label: J'ai lu le `README.md` §10 (dépannage)
+          required: true
+        - label: Le bug n'est pas déjà listé dans `BUGS.md`
+          required: true

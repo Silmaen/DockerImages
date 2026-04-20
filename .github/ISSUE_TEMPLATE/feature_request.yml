@@ -1,0 +1,38 @@
+name: Feature request
+description: Proposer un nouveau preset, un nouvel outil, ou une amélioration
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Besoin
+      description: Quel est le cas d'usage ? Pourquoi c'est utile ?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type de demande
+      options:
+        - Nouveau preset (compilateur / distro)
+        - Outil à ajouter dans base / builder / devel
+        - Amélioration de `generator.py` / `all_ci.sh`
+        - Documentation / tooling / CI
+        - Autre
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposition
+      description: |
+        Si tu as une idée d'implémentation, décris-la ici.
+        Pour un nouveau preset, indique : quelle couche, quel parent, quel script.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considérées
+      description: Autres pistes envisagées et pourquoi elles ne conviennent pas.

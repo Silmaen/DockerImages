@@ -1,0 +1,86 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile generator.py
+        run: python3 -m py_compile generator.py
+
+      - name: Bash syntax on all shell scripts
+        run: |
+          set -e
+          for f in all_ci.sh \
+                   ci_images/install/_common/*.sh \
+                   ci_images/install/base/*.sh \
+                   ci_images/install/builder/*.sh \
+                   ci_images/install/devel/*.sh; do
+            bash -n "$f"
+          done
+
+      - name: Sanity-check presets
+        run: |
+          python3 <<'PY'
+          import sys
+          from pathlib import Path
+          import generator as g
+
+          base = Path("ci_images/install")
+          missing = []
+          setups = set()
+          for name, p in g.presets.items():
+              setup_path = base / (p["setup"] + ".sh")
+              setups.add(p["setup"])
+              if not setup_path.is_file():
+                  missing.append((name, str(setup_path)))
+
+          orphans = []
+          for f in sorted(base.glob("*/*.sh")):
+              rel = str(f.relative_to(base)).removesuffix(".sh")
+              if rel.startswith("_common/"):
+                  continue
+              if rel not in setups:
+                  orphans.append(str(f))
+
+          print(f"Presets: {len(g.presets)}")
+          if missing:
+              print("MISSING setup scripts:")
+              for n, p in missing:
+                  print(f"  {n} -> {p}")
+          if orphans:
+              print("ORPHAN scripts (no preset points to them):")
+              for o in orphans:
+                  print(f"  {o}")
+
+          if missing or orphans:
+              sys.exit(1)
+          PY
+
+      - name: Dry-run every preset
+        run: |
+          set -e
+          # `generator.py --dry-run` still calls `docker buildx inspect` to
+          # validate platforms — skip that by pre-seeding a dummy buildx node.
+          docker buildx create --use --driver docker-container --name ci-lint || true
+          for preset in $(python3 -c "import generator as g; print('\n'.join(g.presets))"); do
+            echo "::group::$preset"
+            ./generator.py --preset "$preset" --dry-run
+            echo "::endgroup::"
+          done
