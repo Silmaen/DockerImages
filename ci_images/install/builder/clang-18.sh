@@ -1,23 +1,17 @@
 #!/usr/bin/env bash
+#
+# Distro-variant clang-18 installer (uses Ubuntu 24.04 stock packages, NOT
+# apt.llvm.org). All other clang builders (clang-llvm-N.sh) pull from
+# apt.llvm.org ; this one keeps the stock distro toolchain so the runtime
+# ABI matches Ubuntu 24.04 exactly.
 
-# Stop if error
 set -e
 
-function update_package_list() {
-  DEBIAN_FRONTEND=noninteractive apt update
-}
-function install_package() {
-  DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y "$@"
-}
-function clear_cache() {
-  DEBIAN_FRONTEND=noninteractive apt autoremove
-  rm -rf /var/cache/apt/archive/* /var/lib/apt/lists/*
-}
+bash /tmp/install/_common/builder.sh
+. /tmp/install/_common/helpers.sh
 
-# update package list
 update_package_list
 
-# Install base packages
 install_package {clang,lld,llvm}-18 clang-tidy-18 libclang-rt-18-dev
 
 update-alternatives --install /usr/bin/lld lld /usr/bin/lld-18 18
@@ -26,5 +20,4 @@ update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 18
 update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 18
 update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-18 18
 
-# Clear the caches
 clear_cache

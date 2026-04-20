@@ -1,51 +1,50 @@
 #!/usr/bin/env bash
+#
+# Base image for Ubuntu 24.04 — RUNTIME ONLY.
+# Contains Python, poetry, runtime libraries (no -dev headers), and common
+# shell utilities. Designed to run the application and its test suite.
+# Build tools (cmake, ninja, compilers, -dev libs) live in the builder layer.
+#
+# Note: Ubuntu 24.04 switched several libs to the "t64" ABI (64-bit time_t).
+# We pin those names explicitly so this script never picks up the transitional
+# stubs.
 
-# Stop if error
 set -e
 
-function update_package_list() {
-  DEBIAN_FRONTEND=noninteractive apt update
-}
-function install_package() {
-  DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y "$@"
-}
-function clear_cache() {
-  DEBIAN_FRONTEND=noninteractive apt autoremove
-  rm -rf /var/cache/apt/archive/* /var/lib/apt/lists/*
-}
+. /tmp/install/_common/helpers.sh
 
-#set time zone
+# Set timezone
 ln -fs /usr/share/zoneinfo/Europe/Paris /etc/localtime
 
-# Change default user to 'user'
-usermod -l user ubuntu
+# Ubuntu 24.04 ships a default "ubuntu" user — rename login, group and home.
+usermod -l user -d /home/user -m ubuntu
+groupmod -n user ubuntu
 
-# update package list
 update_package_list
 
-# Install base packages
-install_package python3 python3-future python3-lxml python3-jinja2 python3-pip python3-requests-toolbelt p7zip unzip \
-                time patchelf cmake cmake-data make ccache doxygen graphviz mold git ninja-build curl
+install_package ca-certificates curl gpg gnupg tzdata locales
+update-ca-certificates
 
-# create a default cache dir
-[ ! -e /tmp/cache_dir ] && install -d -m 0755 -o user -g user /tmp/cache_dir
+# Python runtime + poetry for running app code and test suites
+install_package python3 python3-pip python3-future python3-lxml python3-jinja2 \
+                python3-requests-toolbelt
 
+# Shell utilities and archive tools
+install_package git p7zip unzip time
+
+# Runtime libraries (GUI, sound, Vulkan). t64-suffixed names on 24.04.
+install_package libx11-6 libgtk-3-0t64 libssl3t64 \
+                libasound2t64 libpulse0 libpipewire-0.3-0 libjack-jackd2-0 \
+                libportaudio2 libmysofa1 libsndfile1 \
+                libvulkan1 vulkan-tools mesa-vulkan-drivers libglfw3
+
+# Poetry — lives in /usr/poetry (referenced by Dockerfile's ENV PATH)
 curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/poetry python3 -
 
-# install dependency manager
-pip install --break-system-packages --no-cache-dir depmanager gcovr
-
-# Install dev libraries
-install_package libx11-dev libgtk-3-dev libssl-dev
-
-# Install dev libraries for sound
-install_package libasound2-dev libpulse-dev libpipewire-0.3-dev libjack-dev portaudio19-dev libmysofa-dev libsndfile1-dev
-
-# Install dev libraries for vulkan
-install_package libvulkan-dev libvulkan1 vulkan-tools mesa-vulkan-drivers vulkan-validationlayers libglfw3-dev
-
-# setup the locales
+# Locale
 locale-gen C.UTF-8 en_US.UTF-8 || true
 
-# Clear the caches
+# Scratch cache dir owned by the default user
+install -d -m 0755 -o user -g user /tmp/cache_dir
+
 clear_cache

@@ -1,31 +1,23 @@
 #!/usr/bin/env bash
+#
+# Builder image with GCC 13 on Ubuntu 22.04 (via ppa:ubuntu-toolchain-r/test).
+# Note: on Ubuntu 24.04, g++-13 is native ; this script still works but the PPA
+# step is redundant.
 
-# Stop if error
 set -e
 
-function update_package_list() {
-  DEBIAN_FRONTEND=noninteractive apt update
-}
-function install_package() {
-  DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends -y "$@"
-}
-function clear_cache() {
-  DEBIAN_FRONTEND=noninteractive apt autoremove
-  rm -rf /var/cache/apt/archive/* /var/lib/apt/lists/*
-}
+bash /tmp/install/_common/builder.sh
+. /tmp/install/_common/helpers.sh
 
-# update package list
-update_package_list
-# Add the PPA for GCC 13
-install_package software-properties-common wget
+# PPA for GCC 13 on Ubuntu 22.04 (no-op / duplicate on distros that already
+# ship a recent g++-13 package)
 add-apt-repository -y ppa:ubuntu-toolchain-r/test
+update_package_list
 
-# Install base packages
 install_package g++-13
 
 update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-13 13
 update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 13
 update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 13
 
-# Clear the caches
 clear_cache

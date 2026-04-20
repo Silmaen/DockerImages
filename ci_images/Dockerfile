@@ -4,8 +4,8 @@ FROM ${BASE_IMAGE}
 USER root
 
 ARG SETUP
-COPY install/${SETUP}.sh /install.sh
-RUN bash /install.sh && rm -f /install.sh
+COPY install/ /tmp/install/
+RUN bash /tmp/install/${SETUP}.sh && rm -rf /tmp/install
 ENV LANG=C.UTF-8
 ENV LANGUAGE=C.UTF-8
 ENV LC_ALL=C.UTF-8

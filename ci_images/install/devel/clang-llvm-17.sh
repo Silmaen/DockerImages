@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Devel image for an apt.llvm.org clang-20 builder. The apt.llvm.org repo is
+# Devel image for an apt.llvm.org clang-17 builder. The apt.llvm.org repo is
 # already configured by the builder parent, so we just install lldb-N.
 
 set -e
@@ -10,6 +10,6 @@ bash /tmp/install/_common/devel.sh
 . /tmp/install/_common/helpers.sh
 
 update_package_list
-install_package lldb-20
-update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-20 20
+install_package lldb-17
+update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-17 17
 clear_cache

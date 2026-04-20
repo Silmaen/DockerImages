@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# Devel image for an apt.llvm.org clang-18 builder. The apt.llvm.org repo is
-# already configured by the builder parent, so we just install lldb-N.
+# Devel image for the distro-variant clang-18 builder (Ubuntu 24.04 stock).
 
 set -e
 

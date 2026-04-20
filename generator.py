@@ -13,122 +13,85 @@ dry_run = False
 root_path = Path(__file__).resolve().parent
 ci_images_path = root_path / "ci_images"
 
+def _preset(image_name: str, base: str, setup: str,
+            platforms=("linux/amd64", "linux/arm64")):
+    """Helper to keep the presets dict concise.
+
+    If `base` looks like an internal short name (no ``:`` tag, no ``/`` path
+    component), prepend the internal registry + namespace. Otherwise treat it
+    as a fully-qualified reference (e.g. ``ubuntu:24.04``).
+    """
+    if "/" not in base and ":" not in base:
+        base = f"{registry}/{namespace}/{base}"
+    return {
+        "base_image": base,
+        "setup": setup,
+        "image_name": image_name,
+        "platform": list(platforms),
+        "location": ci_images_path,
+    }
+
+
 presets = {
-    "base-ubuntu2204": {
-        "base_image": "ubuntu:22.04",
-        "setup": "base/ubuntu2204",
-        "image_name": "base-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-gcc12-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup": "builder/gcc-12",
-        "image_name": "builder-gcc12-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-gcc13-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup": "builder/gcc-13",
-        "image_name": "builder-gcc13-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-clang15-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup": "builder/clang-15",
-        "image_name": "builder-clang15-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-clang-llvm16-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup": "builder/clang-llvm-16",
-        "image_name": "builder-clang-llvm16-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-clang-llvm17-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup": "builder/clang-llvm-17",
-        "image_name": "builder-clang-llvm17-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-clang-llvm18-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup": "builder/clang-llvm-18",
-        "image_name": "builder-clang-llvm18-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-clang-llvm19-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup": "builder/clang-llvm-19",
-        "image_name": "builder-clang-llvm19-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-clang-llvm20-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2204",
-        "setup": "builder/clang-llvm-20",
-        "image_name": "builder-clang-llvm20-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "devel-clang-llvm18-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/builder-clang-llvm18-ubuntu2204",
-        "setup": "devel/clang-llvm-18",
-        "image_name": "devel-clang-llvm18-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "devel-clang-llvm20-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/builder-clang-llvm20-ubuntu2204",
-        "setup": "devel/clang-llvm-20",
-        "image_name": "devel-clang-llvm20-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "devel-clang-llvm21-ubuntu2204": {
-        "base_image": f"{registry}/{namespace}/builder-clang-llvm21-ubuntu2204",
-        "setup": "devel/clang-llvm-21",
-        "image_name": "devel-clang-llvm21-ubuntu2204",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
+    #
+    # UBUNTU 22.04
+    #
+    "base-ubuntu2204":
+        _preset("base-ubuntu2204",             "ubuntu:22.04",         "base/ubuntu2204"),
+
+    "builder-gcc12-ubuntu2204":
+        _preset("builder-gcc12-ubuntu2204",    "base-ubuntu2204",      "builder/gcc-12"),
+    "builder-gcc13-ubuntu2204":
+        _preset("builder-gcc13-ubuntu2204",    "base-ubuntu2204",      "builder/gcc-13"),
+    "builder-clang15-ubuntu2204":
+        _preset("builder-clang15-ubuntu2204",  "base-ubuntu2204",      "builder/clang-15"),
+    "builder-clang-llvm16-ubuntu2204":
+        _preset("builder-clang-llvm16-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-16"),
+    "builder-clang-llvm17-ubuntu2204":
+        _preset("builder-clang-llvm17-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-17"),
+    "builder-clang-llvm18-ubuntu2204":
+        _preset("builder-clang-llvm18-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-18"),
+    "builder-clang-llvm19-ubuntu2204":
+        _preset("builder-clang-llvm19-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-19"),
+    "builder-clang-llvm20-ubuntu2204":
+        _preset("builder-clang-llvm20-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-20"),
+    "builder-clang-llvm21-ubuntu2204":
+        _preset("builder-clang-llvm21-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-21"),
+
+    "devel-gcc12-ubuntu2204":
+        _preset("devel-gcc12-ubuntu2204",      "builder-gcc12-ubuntu2204",      "devel/gcc"),
+    "devel-gcc13-ubuntu2204":
+        _preset("devel-gcc13-ubuntu2204",      "builder-gcc13-ubuntu2204",      "devel/gcc"),
+    "devel-clang15-ubuntu2204":
+        _preset("devel-clang15-ubuntu2204",    "builder-clang15-ubuntu2204",    "devel/clang-15"),
+    "devel-clang-llvm16-ubuntu2204":
+        _preset("devel-clang-llvm16-ubuntu2204", "builder-clang-llvm16-ubuntu2204", "devel/clang-llvm-16"),
+    "devel-clang-llvm17-ubuntu2204":
+        _preset("devel-clang-llvm17-ubuntu2204", "builder-clang-llvm17-ubuntu2204", "devel/clang-llvm-17"),
+    "devel-clang-llvm18-ubuntu2204":
+        _preset("devel-clang-llvm18-ubuntu2204", "builder-clang-llvm18-ubuntu2204", "devel/clang-llvm-18"),
+    "devel-clang-llvm19-ubuntu2204":
+        _preset("devel-clang-llvm19-ubuntu2204", "builder-clang-llvm19-ubuntu2204", "devel/clang-llvm-19"),
+    "devel-clang-llvm20-ubuntu2204":
+        _preset("devel-clang-llvm20-ubuntu2204", "builder-clang-llvm20-ubuntu2204", "devel/clang-llvm-20"),
+    "devel-clang-llvm21-ubuntu2204":
+        _preset("devel-clang-llvm21-ubuntu2204", "builder-clang-llvm21-ubuntu2204", "devel/clang-llvm-21"),
+
     #
     # UBUNTU 24.04
     #
-    "base-ubuntu2404": {
-        "base_image": "ubuntu:24.04",
-        "setup": "base/ubuntu2404",
-        "image_name": "base-ubuntu2404",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-gcc14-ubuntu2404": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2404",
-        "setup": "builder/gcc-14",
-        "image_name": "builder-gcc14-ubuntu2404",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "builder-clang18-ubuntu2404": {
-        "base_image": f"{registry}/{namespace}/base-ubuntu2404",
-        "setup": "builder/clang-18",
-        "image_name": "builder-clang18-ubuntu2404",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
-    "devel-clang18-ubuntu2404": {
-        "base_image": f"{registry}/{namespace}/builder-clang18-ubuntu2404",
-        "setup": "devel/debuggers",
-        "image_name": "devel-clang18-ubuntu2404",
-        "platform": ["linux/amd64", "linux/arm64"],
-        "location": ci_images_path,
-    },
+    "base-ubuntu2404":
+        _preset("base-ubuntu2404",             "ubuntu:24.04",         "base/ubuntu2404"),
+
+    "builder-gcc14-ubuntu2404":
+        _preset("builder-gcc14-ubuntu2404",    "base-ubuntu2404",      "builder/gcc-14"),
+    "builder-clang18-ubuntu2404":
+        _preset("builder-clang18-ubuntu2404",  "base-ubuntu2404",      "builder/clang-18"),
+
+    "devel-gcc14-ubuntu2404":
+        _preset("devel-gcc14-ubuntu2404",      "builder-gcc14-ubuntu2404",      "devel/gcc"),
+    "devel-clang18-ubuntu2404":
+        _preset("devel-clang18-ubuntu2404",    "builder-clang18-ubuntu2404",    "devel/clang-18"),
 }
 
 
@@ -211,14 +174,21 @@ def get_host_platform():
 def get_possible_platforms():
     """
     Determine the possible platform for build.
+    Aggregates every ``Platforms:`` line (a multi-node buildx builder prints one
+    per node), which avoids missing platforms when more than one node is
+    registered.
     :return: The list of possible platforms.
     """
     out = run_command("docker buildx inspect --bootstrap", output=True, forced=True)
+    platforms = []
     for line in out.splitlines():
-        if not line.startswith("Platforms"):
+        if not line.lstrip().startswith("Platforms"):
             continue
-        return [i.strip() for i in line.split(":")[-1].split(",")]
-    return []
+        for p in line.split(":", 1)[-1].split(","):
+            p = p.strip()
+            if p and p not in platforms:
+                platforms.append(p)
+    return platforms
 
 
 def get_current_driver():
@@ -266,8 +236,10 @@ def process(
     :param dockerfile_path: Path to the Dockerfile to use.
     """
     try:
-        # force re-pull base image (in case of updates)
-        run_command(f"docker pull {base}")
+        # force re-pull base image (in case of updates) ; tolerate failure so that
+        # building a private-registry chain for the first time (when the base is not
+        # yet published) still proceeds with whatever is already cached locally.
+        run_command(f"docker pull {base}", try_run=True)
         # build image
         full_image = f"{registry}/{namespace}/{output}"
         if tag not in [None, ""]:
@@ -398,7 +370,7 @@ def main():
         base_image = args.base_image
     if args.setup_file not in [None, ""]:
         setup = args.setup_file
-    if args.base_image not in [None, ""]:
+    if args.image_name not in [None, ""]:
         output = args.image_name
     if args.platform not in [None, ""]:
         platforms = args.platform.split(",")
@@ -432,7 +404,8 @@ def main():
             )
             exit(-666)
     print(
-        f"Generating docker images {registry}/{namespace}/{base_image}:{tag} for the platforms {platforms}."
+        f"Generating docker image {registry}/{namespace}/{output}:{tag} "
+        f"(from base {base_image}) for the platforms {platforms}."
     )
 
     if args.full_clean:
