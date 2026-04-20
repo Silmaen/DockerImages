@@ -54,21 +54,34 @@ export CLANG_VERSION=NN
 bash /tmp/install/_common/clang-llvm.sh
 ```
 
-## Squelette d'un script `devel/<variant>.sh`
+## Squelette d'un script `devel/<distro>.sh`
 
-Pour gcc (gdb est déjà dans le commun) :
+Convention du repo : **une seule image `devel-<distro>` par Ubuntu**, construite
+au-dessus du `builder-gcc-<distro>` et qui **ajoute le toolchain clang** + la
+suite de debuggers. Le développeur peut ainsi compiler en gcc ou en clang depuis
+le même conteneur.
+
+Pour une distro qui a clang dans ses paquets (ex: Ubuntu 24.04) :
 
 ```bash
 #!/usr/bin/env bash
 set -e
+. /tmp/install/_common/helpers.sh
+
+update_package_list
+install_package clang-NN lld-NN llvm-NN clang-tidy-NN libclang-rt-NN-dev lldb-NN
+# update-alternatives pour clang, clang++, lld, clang-tidy, llvm-cov, lldb
 bash /tmp/install/_common/devel.sh
+clear_cache
 ```
 
-Pour clang (ajouter lldb versionné) :
+Pour une distro qui a besoin de `apt.llvm.org` (ex: Ubuntu 22.04) :
 
 ```bash
 #!/usr/bin/env bash
 set -e
+export CLANG_VERSION=NN
+bash /tmp/install/_common/clang-llvm.sh     # installe clang + alt + symlink libstdc++
 bash /tmp/install/_common/devel.sh
 . /tmp/install/_common/helpers.sh
 update_package_list

@@ -41,17 +41,13 @@ presets = {
 
     "builder-gcc13-ubuntu2204":
         _preset("builder-gcc13-ubuntu2204",    "base-ubuntu2204",      "builder/gcc-13"),
-    "builder-clang15-ubuntu2204":
-        _preset("builder-clang15-ubuntu2204",  "base-ubuntu2204",      "builder/clang-15"),
     "builder-clang-llvm18-ubuntu2204":
         _preset("builder-clang-llvm18-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-18"),
 
-    "devel-gcc13-ubuntu2204":
-        _preset("devel-gcc13-ubuntu2204",      "builder-gcc13-ubuntu2204",      "devel/gcc"),
-    "devel-clang15-ubuntu2204":
-        _preset("devel-clang15-ubuntu2204",    "builder-clang15-ubuntu2204",    "devel/clang-15"),
-    "devel-clang-llvm18-ubuntu2204":
-        _preset("devel-clang-llvm18-ubuntu2204", "builder-clang-llvm18-ubuntu2204", "devel/clang-llvm-18"),
+    # devel-ubuntu2204 merges both toolchains (gcc + clang) on top of the gcc
+    # builder ; clang is added via apt.llvm.org (22.04 has no clang >= 18).
+    "devel-ubuntu2204":
+        _preset("devel-ubuntu2204",            "builder-gcc13-ubuntu2204",      "devel/ubuntu2204"),
 
     #
     # UBUNTU 24.04
@@ -64,10 +60,10 @@ presets = {
     "builder-clang18-ubuntu2404":
         _preset("builder-clang18-ubuntu2404",  "base-ubuntu2404",      "builder/clang-18"),
 
-    "devel-gcc14-ubuntu2404":
-        _preset("devel-gcc14-ubuntu2404",      "builder-gcc14-ubuntu2404",      "devel/gcc"),
-    "devel-clang18-ubuntu2404":
-        _preset("devel-clang18-ubuntu2404",    "builder-clang18-ubuntu2404",    "devel/clang-18"),
+    # devel-ubuntu2404 merges both toolchains (gcc + clang) on top of the gcc
+    # builder ; clang-18 comes from the distro repos.
+    "devel-ubuntu2404":
+        _preset("devel-ubuntu2404",            "builder-gcc14-ubuntu2404",      "devel/ubuntu2404"),
 }
 
 

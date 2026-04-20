@@ -14,18 +14,40 @@ C++/Python**, multi-arch (`linux/amd64` + `linux/arm64`), publiées sur
 
 Trois **couches sémantiquement distinctes** :
 
-1. **base** — environnement de **run**. Contient uniquement le runtime Python,
-   poetry, les libs runtime (**sans `-dev`**), utilitaires shell. Aucun compilateur,
-   aucun outil de build. Utilisé pour exécuter l'application + ses tests.
-2. **builder** — environnement **CI / build**. Ajoute le toolchain (gcc/clang), les
-   outils de build (`cmake`, `ninja`, `make`, `ccache`, `mold`, `patchelf`, `doxygen`,
-   `graphviz`, `pkg-config`), les libs `-dev`, `depmanager`, `gcovr`, `bear` (dans
-   devel), le repo Kitware pour cmake récent.
-3. **devel** — environnement **dev local**. Ajoute `gdb`, `lldb-N`, `valgrind`,
-   `strace`, `ltrace`, `lcov`, `cppcheck`, `clang-format`, `bear`, `tmux`, `less`,
-   `vim`, `htop`, `git-lfs`, `perf` (best-effort).
+1. **base** — environnement de **run**. Python, poetry, libs runtime (**sans
+   `-dev`**), utilitaires shell. Aucun compilateur, aucun outil de build.
+2. **builder** — environnement **CI / build**. Deux images *séparées* par
+   Ubuntu (une gcc, une clang), chacune avec **un seul** toolchain + `cmake`,
+   `ninja`, `make`, `ccache`, `mold`, `patchelf`, `doxygen`, `graphviz`,
+   `pkg-config`, les libs `-dev`, `depmanager`, `gcovr`, repo Kitware.
+3. **devel** — environnement **dev local**. **Une seule** image par Ubuntu qui
+   **fusionne les deux toolchains** (gcc + clang) et ajoute la suite de
+   debuggers/outils d'analyse (`gdb`, `lldb-N`, `valgrind`, `strace`, `ltrace`,
+   `lcov`, `cppcheck`, `clang-format`, `bear`, `tmux`, `less`, `vim`, `htop`,
+   `git-lfs`, `perf`).
 
-Chaîne : `ubuntu:X` → `base-*` → `builder-*-ubuntu*` → `devel-*-ubuntu*`.
+Chaîne :
+
+```
+ubuntu:X ──▶ base-ubuntuNN ──▶ builder-gccN-ubuntuNN ─────▶ devel-ubuntuNN
+                          └──▶ builder-clang(-llvm)?N-ubuntuNN
+                                                       (le clang est ré-installé
+                                                        dans le devel par-dessus
+                                                        le builder-gcc)
+```
+
+**Règle de sélection des compilateurs** : pour chaque Ubuntu, **un** gcc + **un**
+clang, tous deux empaquetés dans le devel. Le clang passe par :
+- **apt.llvm.org** si la version distro est trop vieille (Ubuntu 22.04 → clang-18
+  via LLVM) ;
+- **paquet distro** sinon (Ubuntu 24.04 → clang-18 natif).
+
+Jeu actuel (8 presets) :
+
+| Distro       | base            | builder gcc         | builder clang                   | devel (fusion)   |
+|--------------|-----------------|---------------------|---------------------------------|------------------|
+| Ubuntu 22.04 | `base-ubuntu2204` | `builder-gcc13-*` (PPA) | `builder-clang-llvm18-*` (apt.llvm.org) | `devel-ubuntu2204` |
+| Ubuntu 24.04 | `base-ubuntu2404` | `builder-gcc14-*` (distro) | `builder-clang18-*` (distro) | `devel-ubuntu2404` |
 
 ---
 
@@ -44,8 +66,8 @@ Chaîne : `ubuntu:X` → `base-*` → `builder-*-ubuntu*` → `devel-*-ubuntu*`.
 │       │   ├── devel.sh      # tools dev communs pour TOUS les devel/*.sh
 │       │   └── clang-llvm.sh # template paramétrique apt.llvm.org
 │       ├── base/             # couche runtime (ubuntu2204.sh, ubuntu2404.sh)
-│       ├── builder/          # toolchains (gcc-*, clang-*, clang-llvm-*)
-│       └── devel/            # debuggers (gcc.sh générique, clang-*, clang-llvm-*)
+│       ├── builder/          # toolchains : gcc-13, gcc-14, clang-18, clang-llvm-18
+│       └── devel/            # ubuntu2204.sh, ubuntu2404.sh (fusion gcc + clang + debuggers)
 ├── run_docker_build.sh       # wrapper docker run optimisé
 ├── run_docker_bench.sh       # microbench inter-images
 ├── README.md                 # doc utilisateur (Mermaid + guides)

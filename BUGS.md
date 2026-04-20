@@ -179,6 +179,29 @@ table des matières, guides d'ajout d'images et section dépannage.
 
 ---
 
+## Ménage des presets (2026-04-20, après refactor)
+
+Sur décision de l'utilisateur, en deux passes :
+
+1. **Ne garder que 2 compilateurs par Ubuntu** (gcc + clang principal). Ubuntu
+   22.04 passe par `apt.llvm.org` pour avoir clang ≥ 18 ; Ubuntu 24.04 utilise
+   les paquets distro.
+2. **Fusionner les devel gcc/clang en une seule image `devel-<distro>`** qui
+   embarque les deux toolchains. Le devel descend du builder-gcc correspondant
+   et ajoute clang + les debuggers.
+
+Jeu final : **8 presets**.
+
+| Distro       | base            | builder gcc           | builder clang                     | devel (fusion)   |
+|--------------|-----------------|-----------------------|-----------------------------------|------------------|
+| Ubuntu 22.04 | base-ubuntu2204 | builder-gcc13-* (PPA) | builder-clang-llvm18-* (apt.llvm.org) | devel-ubuntu2204 |
+| Ubuntu 24.04 | base-ubuntu2404 | builder-gcc14-* (distro) | builder-clang18-* (distro)     | devel-ubuntu2404 |
+
+Scripts d'install supprimés : `builder/{gcc-12, clang-15, clang-llvm-{16,17,19,20,21}}.sh`
+et toute l'ancienne arborescence `devel/{gcc, clang-15, clang-18, clang-llvm-*}.sh`.
+Remplacés par `devel/ubuntu2204.sh` et `devel/ubuntu2404.sh`. Le framework
+`_common/` reste intact, prêt à accueillir d'autres versions.
+
 ## Refactor profond (2026-04-20)
 
 Refactor en trois couches sémantiquement distinctes :

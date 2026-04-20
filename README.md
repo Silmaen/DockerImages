@@ -26,13 +26,16 @@ d'installation** sélectionné par un paramètre — l'ensemble est orchestré p
 
 ## 1. Sémantique des trois couches
 
-| Couche  | Rôle                                                      | Contenu typique                           | Ce qui n'y est **pas**            |
-|---------|-----------------------------------------------------------|-------------------------------------------|-----------------------------------|
-| `base`  | **Run** : exécuter l'application + ses tests              | Python, `poetry`, libs runtime (sans `-dev`), outils d'archive, `git`, locale, utilisateur `user` | Aucun compilateur, aucun `-dev`, aucun outil de build |
-| `builder` | **CI / build** : compiler les projets                   | Tout ce qu'a `base` + toolchain (gcc/clang) + `cmake`, `ninja`, `make`, `ccache`, `mold`, libs `-dev`, `pkg-config`, `depmanager`, `gcovr` | Debuggers interactifs non nécessaires au build |
-| `devel` | **Poste dev** : workflow développeur sur un builder      | Tout ce qu'a `builder` + `gdb`, `lldb-N`, `valgrind`, `strace`, `ltrace`, `lcov`, `cppcheck`, `clang-format`, `bear`, `tmux`, `less`, `vim`, `htop`, `git-lfs` | Rien de plus que l'éditeur / IDE |
+| Couche    | Rôle                                                             | Contenu typique                                                                                   |
+|-----------|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| `base`    | **Run** : exécuter l'application + ses tests                     | Python, `poetry`, libs runtime (sans `-dev`), outils d'archive, `git`, locale, utilisateur `user` |
+| `builder` | **CI / build** : compiler un projet avec **un seul** toolchain   | `base` + **un** toolchain (gcc **ou** clang) + `cmake`, `ninja`, `make`, `ccache`, `mold`, libs `-dev`, `depmanager`, `gcovr` |
+| `devel`   | **Poste dev** : un **seul** conteneur pour tout le workflow dev  | `builder-gcc` + **l'autre** toolchain (clang) + debuggers (`gdb`, `lldb`, `valgrind`, `strace`, `ltrace`, `lcov`, `cppcheck`, `clang-format`, `bear`, `tmux`, `less`, `vim`, `htop`, `git-lfs`) |
 
-Une image descend toujours de la couche en dessous : `base` ← `builder` ← `devel`.
+- `base` → `builder-gcc-*` et `builder-clang-*` (deux images CI séparées, chacune
+  un seul toolchain, pour garder les images builder slim).
+- `devel-<distro>` descend de `builder-gcc-*` et **ajoute clang + les debuggers** →
+  un seul conteneur dev qui compile dans les deux configurations et debug tout.
 
 ---
 
@@ -71,8 +74,8 @@ graph TD
     C --> I[install/]
     I --> CO[_common/<br/>helpers.sh<br/>builder.sh<br/>devel.sh<br/>clang-llvm.sh]
     I --> IB[base/<br/>ubuntu2204.sh<br/>ubuntu2404.sh]
-    I --> IR[builder/<br/>gcc-12,13,14<br/>clang-15,18<br/>clang-llvm-16..21]
-    I --> IV[devel/<br/>gcc.sh<br/>clang-15,18<br/>clang-llvm-16..21]
+    I --> IR[builder/<br/>gcc-13 gcc-14<br/>clang-18 clang-llvm-18]
+    I --> IV[devel/<br/>ubuntu2204.sh<br/>ubuntu2404.sh]
 ```
 
 ### 3.2 Partage de code via `install/_common/`
@@ -143,43 +146,37 @@ USER user
 
 ## 4. Chaîne de dépendances
 
+**Règle** : pour chaque Ubuntu on garde **deux compilateurs** — un gcc et un clang.
+Le clang passe par la version LLVM apt.llvm.org si la version distro est trop
+ancienne (ex: Ubuntu 22.04 → clang-llvm-18), sinon par la version distro
+(Ubuntu 24.04 → clang-18).
+
 ### 4.1 Famille Ubuntu 22.04
 
 ```mermaid
 graph LR
     U2204[ubuntu:22.04] --> B2204[base-ubuntu2204]
-
-    B2204 --> G12[builder-gcc12-ubuntu2204]
-    B2204 --> G13[builder-gcc13-ubuntu2204]
-    B2204 --> C15[builder-clang15-ubuntu2204]
-    B2204 --> C16[builder-clang-llvm16-ubuntu2204]
-    B2204 --> C17[builder-clang-llvm17-ubuntu2204]
-    B2204 --> C18[builder-clang-llvm18-ubuntu2204]
-    B2204 --> C19[builder-clang-llvm19-ubuntu2204]
-    B2204 --> C20[builder-clang-llvm20-ubuntu2204]
-    B2204 --> C21[builder-clang-llvm21-ubuntu2204]
-
-    G12 --> DG12[devel-gcc12-ubuntu2204]
-    G13 --> DG13[devel-gcc13-ubuntu2204]
-    C15 --> DC15[devel-clang15-ubuntu2204]
-    C16 --> DC16[devel-clang-llvm16-ubuntu2204]
-    C17 --> DC17[devel-clang-llvm17-ubuntu2204]
-    C18 --> DC18[devel-clang-llvm18-ubuntu2204]
-    C19 --> DC19[devel-clang-llvm19-ubuntu2204]
-    C20 --> DC20[devel-clang-llvm20-ubuntu2204]
-    C21 --> DC21[devel-clang-llvm21-ubuntu2204]
+    B2204 --> G13[builder-gcc13-ubuntu2204<br/>PPA ubuntu-toolchain-r]
+    B2204 --> C18[builder-clang-llvm18-ubuntu2204<br/>apt.llvm.org]
+    G13 --> D[devel-ubuntu2204<br/>gcc-13 + clang-18 + debuggers]
 ```
+
+Le `devel-ubuntu2204` descend de `builder-gcc13-ubuntu2204` (pour hériter de
+cmake, ninja, libs `-dev`, etc.) et ajoute **clang-18** via apt.llvm.org + la
+suite complète de debuggers / outils d'analyse.
 
 ### 4.2 Famille Ubuntu 24.04
 
 ```mermaid
 graph LR
     U2404[ubuntu:24.04] --> B2404[base-ubuntu2404]
-    B2404 --> G14[builder-gcc14-ubuntu2404]
-    B2404 --> C18[builder-clang18-ubuntu2404]
-    G14 --> DG14[devel-gcc14-ubuntu2404]
-    C18 --> DC18[devel-clang18-ubuntu2404]
+    B2404 --> G14[builder-gcc14-ubuntu2404<br/>distro]
+    B2404 --> C18[builder-clang18-ubuntu2404<br/>distro]
+    G14 --> D[devel-ubuntu2404<br/>gcc-14 + clang-18 + debuggers]
 ```
+
+Le `devel-ubuntu2404` descend de `builder-gcc14-ubuntu2404` et ajoute **clang-18**
+depuis les paquets distro + la suite complète de debuggers.
 
 ---
 
