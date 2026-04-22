@@ -35,33 +35,39 @@ def _preset(image_name: str, base: str, setup: str,
 presets = {
     #
     # UBUNTU 22.04
+    # gcc-12 natif (main) — libstdc++6 stock 12.3.0.
+    # clang-22 via apt.llvm.org, linké à la libstdc++ stock → binaires
+    # exécutables sur un 22.04 stock sans PPA.
     #
     "base-ubuntu2204":
         _preset("base-ubuntu2204",             "ubuntu:22.04",         "base/ubuntu2204"),
 
-    "builder-gcc13-ubuntu2204":
-        _preset("builder-gcc13-ubuntu2204",    "base-ubuntu2204",      "builder/gcc-13"),
-    "builder-clang-llvm18-ubuntu2204":
-        _preset("builder-clang-llvm18-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-18"),
+    "builder-gcc12-ubuntu2204":
+        _preset("builder-gcc12-ubuntu2204",    "base-ubuntu2204",      "builder/gcc-12"),
+    "builder-clang-llvm22-ubuntu2204":
+        _preset("builder-clang-llvm22-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-22"),
 
-    # devel-ubuntu2204 merges both toolchains (gcc + clang) on top of the gcc
-    # builder ; clang is added via apt.llvm.org (22.04 has no clang >= 18).
+    # devel-ubuntu2204 fusionne les deux toolchains (gcc + clang) par-dessus
+    # le builder gcc ; clang-22 est ajouté via apt.llvm.org.
     "devel-ubuntu2204":
-        _preset("devel-ubuntu2204",            "builder-gcc13-ubuntu2204",      "devel/ubuntu2204"),
+        _preset("devel-ubuntu2204",            "builder-gcc12-ubuntu2204",      "devel/ubuntu2204"),
 
     #
     # UBUNTU 24.04
+    # gcc-14 natif (universe) — libstdc++6 stock 14.2.0.
+    # clang-22 via apt.llvm.org, linké à la libstdc++ stock → binaires
+    # exécutables sur un 24.04 stock sans PPA.
     #
     "base-ubuntu2404":
         _preset("base-ubuntu2404",             "ubuntu:24.04",         "base/ubuntu2404"),
 
     "builder-gcc14-ubuntu2404":
         _preset("builder-gcc14-ubuntu2404",    "base-ubuntu2404",      "builder/gcc-14"),
-    "builder-clang18-ubuntu2404":
-        _preset("builder-clang18-ubuntu2404",  "base-ubuntu2404",      "builder/clang-18"),
+    "builder-clang-llvm22-ubuntu2404":
+        _preset("builder-clang-llvm22-ubuntu2404", "base-ubuntu2404",  "builder/clang-llvm-22"),
 
-    # devel-ubuntu2404 merges both toolchains (gcc + clang) on top of the gcc
-    # builder ; clang-18 comes from the distro repos.
+    # devel-ubuntu2404 fusionne les deux toolchains (gcc + clang) par-dessus
+    # le builder gcc ; clang-22 est ajouté via apt.llvm.org.
     "devel-ubuntu2404":
         _preset("devel-ubuntu2404",            "builder-gcc14-ubuntu2404",      "devel/ubuntu2404"),
 }

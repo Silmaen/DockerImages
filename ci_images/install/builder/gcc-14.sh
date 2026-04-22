@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 #
-# Builder image with GCC 14 (Ubuntu 24.04 stock).
+# Builder image avec GCC 14 (max natif dans Ubuntu 24.04 universe).
+# Garantit que les binaires produits linkent libstdc++6 14.2.0, version
+# shipped dans Ubuntu 24.04 main → aucun paquet hors repos officiels à
+# installer sur la target pour exécuter.
 
 set -e
 

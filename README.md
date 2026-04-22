@@ -29,13 +29,20 @@ d'installation** sélectionné par un paramètre — l'ensemble est orchestré p
 | Couche    | Rôle                                                             | Contenu typique                                                                                   |
 |-----------|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
 | `base`    | **Run** : exécuter l'application + ses tests                     | Python, `poetry`, libs runtime (sans `-dev`), outils d'archive, `git`, locale, utilisateur `user` |
-| `builder` | **CI / build** : compiler un projet avec **un seul** toolchain   | `base` + **un** toolchain (gcc **ou** clang) + `cmake`, `ninja`, `make`, `ccache`, `mold`, libs `-dev`, `depmanager`, `gcovr` |
-| `devel`   | **Poste dev** : un **seul** conteneur pour tout le workflow dev  | `builder-gcc` + **l'autre** toolchain (clang) + debuggers (`gdb`, `lldb`, `valgrind`, `strace`, `ltrace`, `lcov`, `cppcheck`, `clang-format`, `bear`, `tmux`, `less`, `vim`, `htop`, `git-lfs`) |
+| `builder` | **CI / build** : compiler un projet avec **un seul** toolchain   | `base` + **un** toolchain (gcc natif **ou** clang-22 apt.llvm.org) + `cmake`, `ninja`, `make`, `ccache`, `mold`, libs `-dev`, `depmanager`, `gcovr` |
+| `devel`   | **Poste dev** : un **seul** conteneur pour tout le workflow dev  | `builder-gcc` + **l'autre** toolchain (clang-22) + debuggers (`gdb`, `lldb`, `valgrind`, `strace`, `ltrace`, `lcov`, `cppcheck`, `clang-format`, `bear`, `tmux`, `less`, `vim`, `htop`, `git-lfs`) |
 
 - `base` → `builder-gcc-*` et `builder-clang-*` (deux images CI séparées, chacune
   un seul toolchain, pour garder les images builder slim).
 - `devel-<distro>` descend de `builder-gcc-*` et **ajoute clang + les debuggers** →
   un seul conteneur dev qui compile dans les deux configurations et debug tout.
+
+Distributions publiées :
+
+| Distro       | glibc | Compat runtime 24.04   | arm64 émulé QEMU                                             |
+|--------------|-------|------------------------|---------------------------------------------------------------|
+| Ubuntu 22.04 | 2.35  | ✓ (libstdc++ séparée)  | ✓ sur hôte 26.04 LTS ; ❌ bash SIGSEGV sur 24.04 host (QEMU 8.2) |
+| Ubuntu 24.04 | 2.39  | ✓                      | ✓ sur toute version QEMU                                      |
 
 ---
 
@@ -68,13 +75,13 @@ graph TD
     R[Repo root] --> G[generator.py]
     R --> A[all_ci.sh]
     R --> B[run_docker_build.sh]
-    R --> N[run_docker_bench.sh]
+    R --> N[run_docker_bench.py]
     R --> C[ci_images/]
     C --> D[Dockerfile]
     C --> I[install/]
     I --> CO[_common/<br/>helpers.sh<br/>builder.sh<br/>devel.sh<br/>clang-llvm.sh]
     I --> IB[base/<br/>ubuntu2204.sh<br/>ubuntu2404.sh]
-    I --> IR[builder/<br/>gcc-13 gcc-14<br/>clang-18 clang-llvm-18]
+    I --> IR[builder/<br/>gcc-12.sh gcc-14.sh<br/>clang-llvm-22.sh]
     I --> IV[devel/<br/>ubuntu2204.sh<br/>ubuntu2404.sh]
 ```
 
@@ -151,32 +158,42 @@ Le clang passe par la version LLVM apt.llvm.org si la version distro est trop
 ancienne (ex: Ubuntu 22.04 → clang-llvm-18), sinon par la version distro
 (Ubuntu 24.04 → clang-18).
 
+Règle dure : les binaires produits doivent s'exécuter sur un Ubuntu **stock
+Canonical (main + universe)** de la même révision — pas de PPA exigé côté
+utilisateur final. Cela impose `gcc` natif stock et clang lié à la
+libstdc++ stock.
+
 ### 4.1 Famille Ubuntu 22.04
 
 ```mermaid
 graph LR
     U2204[ubuntu:22.04] --> B2204[base-ubuntu2204]
-    B2204 --> G13[builder-gcc13-ubuntu2204<br/>PPA ubuntu-toolchain-r]
-    B2204 --> C18[builder-clang-llvm18-ubuntu2204<br/>apt.llvm.org]
-    G13 --> D[devel-ubuntu2204<br/>gcc-13 + clang-18 + debuggers]
+    B2204 --> G12[builder-gcc12-ubuntu2204<br/>main natif]
+    B2204 --> C22[builder-clang-llvm22-ubuntu2204<br/>apt.llvm.org + libstdc++ stock]
+    G12 --> D[devel-ubuntu2204<br/>gcc-12 + clang-22 + debuggers]
 ```
-
-Le `devel-ubuntu2204` descend de `builder-gcc13-ubuntu2204` (pour hériter de
-cmake, ninja, libs `-dev`, etc.) et ajoute **clang-18** via apt.llvm.org + la
-suite complète de debuggers / outils d'analyse.
 
 ### 4.2 Famille Ubuntu 24.04
 
 ```mermaid
 graph LR
     U2404[ubuntu:24.04] --> B2404[base-ubuntu2404]
-    B2404 --> G14[builder-gcc14-ubuntu2404<br/>distro]
-    B2404 --> C18[builder-clang18-ubuntu2404<br/>distro]
-    G14 --> D[devel-ubuntu2404<br/>gcc-14 + clang-18 + debuggers]
+    B2404 --> G14[builder-gcc14-ubuntu2404<br/>universe natif]
+    B2404 --> C22[builder-clang-llvm22-ubuntu2404<br/>apt.llvm.org + libstdc++ stock]
+    G14 --> D[devel-ubuntu2404<br/>gcc-14 + clang-22 + debuggers]
 ```
 
-Le `devel-ubuntu2404` descend de `builder-gcc14-ubuntu2404` et ajoute **clang-18**
-depuis les paquets distro + la suite complète de debuggers.
+### 4.3 Portabilité runtime — garantie
+
+| Distro builder | libstdc++6 linkée | Runtime stock Canonical |
+|----------------|-------------------|--------------------------|
+| Ubuntu 22.04   | 12.3.0 (jammy-updates/main) | ✓ tourne out of the box |
+| Ubuntu 24.04   | 14.2.0 (noble-updates/main) | ✓ tourne out of the box |
+
+Le template `_common/clang-llvm.sh` détecte dynamiquement la version de
+`libstdc++6` déjà installée par `base-*` et installe `libstdc++-${N}-dev`
+en conséquence — pas de dérive vers une libstdc++ plus récente que la
+stock distro.
 
 ---
 
@@ -300,7 +317,7 @@ Pièges connus :
 |--------------------------------------------------|-------------------------------------------|-------------------------------------------------------------|
 | `exec format error` arm64                        | `binfmt_misc` pas installé sur l'hôte     | `apt install qemu-user-static binfmt-support`               |
 | `qemu: uncaught target signal 11` en 22.04 arm64 | glibc 2.35 + MTE mal émulé                | Ne pas utiliser 22.04 arm64 ; privilégier bookworm / 24.04  |
-| Builds 3× plus lents en 24.04 arm64              | PAC/BTI et glibc 2.39 durcie              | Cf `TODO_docker_images_optimization.md` (roadmap Debian)    |
+| Builds 3× plus lents en 24.04 arm64              | PAC/BTI et glibc 2.39 durcie              | Cf `BENCHMARK_arm64_emulation.md` (roadmap Debian)    |
 
 ---
 
@@ -311,15 +328,25 @@ Pièges connus :
 Wrapper `docker run` optimisé (tmpfs, cache depmanager persistant, seccomp relâché,
 tunables glibc). Variables d'env : `PLATFORM`, `IMAGE`, `CMD`, `DM_CACHE`, `TMPFS_SIZE`.
 
-### `run_docker_bench.sh`
+### `run_docker_bench.py`
 
-Microbench qui compare l'overhead d'émulation QEMU pour une liste d'images (bash loop,
-startup shell, startup Python, compile C simple).
+Microbench Python qui compare stabilité (`sh`/`bash`/`python3`) et perf
+(sh loop, fork/exec, Python startup, compile C) d'une liste d'images en amd64
+natif vs arm64 émulé. Ratios calculés automatiquement :
+
+- **amd64** : rapport au host natif (overhead Docker).
+- **arm64** : rapport à la même image en amd64 (overhead QEMU pur).
 
 ```bash
-./run_docker_bench.sh                                     # images par défaut
-./run_docker_bench.sh ubuntu:24.04 debian:bookworm-slim   # images custom
+./run_docker_bench.py                                     # images par défaut
+./run_docker_bench.py ubuntu:24.04 debian:bookworm-slim   # images custom
+./run_docker_bench.py --stability-only                    # skip perf
+./run_docker_bench.py --json results.json                 # export JSON
 ```
+
+Options CLI complètes : `./run_docker_bench.py --help`. Les variables d'env
+`BENCH_PLATFORMS`, `BENCH_TIMEOUT`, `BENCH_PULL`, `BENCH_STABILITY_ONLY`,
+`BENCH_PERF_ONLY` sont acceptées pour compat avec l'ancien script bash.
 
 ---
 
@@ -355,4 +382,4 @@ Sur l'hôte CI TeamCity (DinD), les réglages kernel doivent être faits sur la 
 | Un `.sh` ne trouve pas `/tmp/install/_common/...`       | Le `Dockerfile` doit copier `install/` entier (pas juste un script) |
 
 Pour tout autre problème, consulter `BUGS.md` (audit statique) et
-`TODO_docker_images_optimization.md` (roadmap perf).
+`BENCHMARK_arm64_emulation.md` (roadmap perf).

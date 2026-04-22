@@ -3,27 +3,24 @@
 # Devel image for Ubuntu 24.04 — merges BOTH toolchains on top of the gcc
 # builder so developers can build with either gcc or clang.
 #
-# Parent image: registry.argawaen.net/builder/builder-gcc14-ubuntu2404
-#   (already provides: gcc-14, cmake, ninja, -dev libs, depmanager, ...)
+# Parent image: registry.argawaen.net/builder/builder-gcc15-ubuntu2404
+#   (already provides: gcc-15 via PPA, cmake, ninja, -dev libs, depmanager, ...)
 # This script adds:
-#   - clang-18 from the distro repos (Ubuntu 24.04 ships clang-18 natively)
+#   - clang-22 via apt.llvm.org (latest stable release)
 #   - the full devel tooling (gdb, lldb, valgrind, profilers, ...)
 
 set -e
 
-. /tmp/install/_common/helpers.sh
+# Install clang toolchain from apt.llvm.org
+export CLANG_VERSION=22
+bash /tmp/install/_common/clang-llvm.sh
 
-update_package_list
-install_package clang-18 lld-18 llvm-18 clang-tidy-18 libclang-rt-18-dev lldb-18
-
-update-alternatives --install /usr/bin/lld lld /usr/bin/lld-18 18
-update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 18
-update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 18
-update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 18
-update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-18 18
-update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-18 18
-
-# Common devel tooling
+# Install the common devel tooling (gdb, valgrind, strace, lcov, ...)
 bash /tmp/install/_common/devel.sh
 
+# lldb matching the clang version
+. /tmp/install/_common/helpers.sh
+update_package_list
+install_package lldb-22
+update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-22 22
 clear_cache

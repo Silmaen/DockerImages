@@ -29,6 +29,6 @@ hors `try_run=True`. Pas d'exception propagée. Conséquences :
 - Pas de CI automatique (GitHub Actions / TeamCity) visible dans le repo. Un job
   `./generator.py --preset X --dry-run` sur chaque PR détecterait les presets
   cassés avant merge.
-- `run_docker_build.sh` et `run_docker_bench.sh` à la racine viennent du repo
+- `run_docker_build.sh` et `run_docker_bench.py` à la racine viennent du repo
   sœur `OwlDependencies`. Leur place ici est à clarifier : outils de test
   d'image, ou artefacts destinés aux consumers ?

@@ -44,10 +44,29 @@ clang, tous deux empaquetés dans le devel. Le clang passe par :
 
 Jeu actuel (8 presets) :
 
-| Distro       | base            | builder gcc         | builder clang                   | devel (fusion)   |
-|--------------|-----------------|---------------------|---------------------------------|------------------|
-| Ubuntu 22.04 | `base-ubuntu2204` | `builder-gcc13-*` (PPA) | `builder-clang-llvm18-*` (apt.llvm.org) | `devel-ubuntu2204` |
-| Ubuntu 24.04 | `base-ubuntu2404` | `builder-gcc14-*` (distro) | `builder-clang18-*` (distro) | `devel-ubuntu2404` |
+| Distro       | base               | builder gcc                           | builder clang                                      | devel (fusion)    |
+|--------------|--------------------|---------------------------------------|----------------------------------------------------|-------------------|
+| Ubuntu 22.04 | `base-ubuntu2204`  | `builder-gcc12-ubuntu2204` (natif)    | `builder-clang-llvm22-ubuntu2204` (apt.llvm.org)   | `devel-ubuntu2204`|
+| Ubuntu 24.04 | `base-ubuntu2404`  | `builder-gcc14-ubuntu2404` (natif)    | `builder-clang-llvm22-ubuntu2404` (apt.llvm.org)   | `devel-ubuntu2404`|
+
+### Contrainte de portabilité — règle dure du projet
+
+Les binaires produits doivent être exécutables sur **un Ubuntu stock (main +
+universe Canonical, sans PPA)** de la même révision. Conséquences :
+
+- **gcc = version native stock uniquement** (pas de PPA `toolchain-r/test`),
+  sinon le binaire lie une libstdc++ plus récente que celle shipped :
+  - 22.04 → gcc-12 max (libstdc++6 stock = 12.3.0)
+  - 24.04 → gcc-14 max (libstdc++6 stock = 14.2.0)
+- **clang peut venir d'`apt.llvm.org`** (tool de build, pas d'incidence
+  runtime) **à condition** d'être lié à la libstdc++ stock.
+  `_common/clang-llvm.sh` détecte `STDCPP_VER` à partir de la version de
+  `libstdc++6` installée par `base-*`, garantissant ce lien.
+- `cmake` récent via Kitware OK (tool de build uniquement).
+
+**arm64 émulé** : corrigé sur hôte Ubuntu 26.04 LTS (QEMU 10.2.1 packagé
+Debian). Sur 24.04 host avec QEMU 8.2.2, bash crashe sur les images glibc
+< 2.39. Détails dans `BENCHMARK_arm64_emulation.md` §2.
 
 ---
 
@@ -69,11 +88,11 @@ Jeu actuel (8 presets) :
 │       ├── builder/          # toolchains : gcc-13, gcc-14, clang-18, clang-llvm-18
 │       └── devel/            # ubuntu2204.sh, ubuntu2404.sh (fusion gcc + clang + debuggers)
 ├── run_docker_build.sh       # wrapper docker run optimisé
-├── run_docker_bench.sh       # microbench inter-images
+├── run_docker_bench.py       # microbench inter-images (stabilité + perf + JSON)
 ├── README.md                 # doc utilisateur (Mermaid + guides)
 ├── BUGS.md                   # audit statique (OUVERT / RÉSOLU)
 ├── CLAUDE.md                 # ce fichier
-└── TODO_docker_images_optimization.md
+└── BENCHMARK_arm64_emulation.md  # rapport de bench arm64 émulé vs amd64 natif
 ```
 
 ---
@@ -240,7 +259,7 @@ Préfixe `clang-N` (sans `llvm`) = paquet natif de la distro.
 
 ## 8. Contexte transverse
 
-`TODO_docker_images_optimization.md` vient d'une session de diagnostic sur
+`BENCHMARK_arm64_emulation.md` vient d'une session de diagnostic sur
 `OwlDependencies` (repo sœur). Les recommandations de base (`debian:bookworm-slim` pour
 builder arm64 sous QEMU) sont à implémenter **dans ce repo-ci** quand le feu vert est
 donné, en ajoutant :

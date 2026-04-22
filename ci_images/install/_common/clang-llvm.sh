@@ -20,9 +20,17 @@ echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] https://apt.l
 
 update_package_list
 
-# Pick the newest libstdc++-*-dev available in apt (so clang has a modern C++ runtime)
-STDCPP_VER=$(apt-cache search --names-only '^libstdc\+\+-[0-9]+-dev$' | \
-  grep -o 'libstdc++-[0-9]\+-dev' | sort -V | tail -n1 | grep -o '[0-9]\+')
+# Lie le clang à la libstdc++ **déjà installée par l'image parente** (version
+# stock de la distro) — pas à la plus récente dispo dans apt. Cette règle
+# garantit que les binaires produits restent exécutables sur une target
+# stock Canonical sans ajouter de PPA :
+#   - Ubuntu 22.04 : libstdc++6 12.3.0 → STDCPP_VER=12
+#   - Ubuntu 24.04 : libstdc++6 14.2.0 → STDCPP_VER=14
+STDCPP_VER=$(dpkg -s libstdc++6 2>/dev/null | awk '/^Version:/ {print $2}' | grep -oE '^[0-9]+' | head -1)
+if [[ -z "$STDCPP_VER" ]]; then
+  echo "ERROR: libstdc++6 n'est pas installé — impossible de déterminer STDCPP_VER" >&2
+  exit 1
+fi
 
 install_package  {clang,lld,llvm,clang-tidy}-${CLANG_VERSION} \
                  libclang*-${CLANG_VERSION}-dev \

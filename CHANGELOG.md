@@ -5,6 +5,71 @@ Les versions correspondent aux tags de release (si / quand des tags sont posés)
 
 ## [Unreleased]
 
+### Added (2026-04-20, soir)
+- **`run_docker_bench.py`** : portage Python du script bash. Typage via
+  dataclasses, export JSON via `--json`, CLI propre (`argparse`), compat env
+  vars conservée. `run_docker_bench.sh` supprimé.
+- Famille **Debian bookworm** : `base-debian-bookworm`,
+  `builder-gcc12-debian-bookworm`, `builder-clang-llvm21-debian-bookworm`,
+  `devel-debian-bookworm`. Produit des binaires compat Ubuntu 24.04 runtime
+  (glibc 2.36 ≤ 2.39, libstdc++-12). Compilateurs les plus récents dispo sur
+  la plateforme : gcc-12 natif + clang-21 via apt.llvm.org.
+- Script commun `install/builder/clang-llvm-21.sh` (template paramétrique pour
+  toute famille apt.llvm.org).
+
+### Changed
+- Doc (`README.md`, `CLAUDE.md`) : tableau des distros avec compat arm64
+  émulé — note explicite sur le SIGSEGV bash pour glibc < 2.39.
+- `BENCHMARK_arm64_emulation.md` §5 : validation empirique avec QEMU 10.2.1
+  (via `tonistiigi/binfmt:qemu-v10.2.1`). Le fix upstream (commit
+  `4b7b20a3`) ne couvre que ldconfig, pas bash/python → Ubuntu 26.04 ne
+  débloquera **pas** arm64 émulé pour 22.04/bookworm. En revanche QEMU
+  10.2.1 booste **×4-5** les perfs arm64 émulé 24.04 (émulation PAC/BTI
+  plus rapide). Procédure d'install QEMU 10.2.1 documentée §5.3.
+- `BENCHMARK_arm64_emulation.md` §2.2 / §5 (révision) : mesures sur un
+  hôte **Ubuntu 25.10 + QEMU 10.1.0 packagé Debian** — `bash` et `python3`
+  **fonctionnent** sur 22.04/bookworm arm64 émulé. Conclusion : les patches
+  du packaging Debian/Ubuntu contiennent un fix complémentaire au commit
+  upstream `4b7b20a3` ; tonistiigi (upstream pur) ne l'a pas.
+- `BENCHMARK_arm64_emulation.md` §2.2 / §3.5 / §5.2 (validation définitive,
+  2026-04-22) : mesures sur **Ubuntu 26.04 LTS + QEMU 10.2.1 packagé
+  Debian** (machine ceos upgradée de 25.10). Confirme le fix stabilité et
+  ajoute les ratios arm64/amd64 intra-machine + projection vers 24.04 dev.
+  §3.6 normalise les temps inter-machines via les facteurs natifs.
+- Retrait de `script_qemu/install-qemu-user-10.sh` et
+  `qemu-binfmt-tonistiigi.service` : l'utilisateur force les upgrades
+  quand nécessaire, le workaround tonistiigi n'apporte plus que la perf
+  24.04 (qui devient caduc avec 26.04 LTS).
+- `BENCHMARK_arm64_emulation.md` §6.4 : upgrade 26.04 LTS est la seule
+  option durable listée (tonistiigi retiré).
+- **Révision des toolchains sous contrainte "runtime sans PPA"
+  (2026-04-22)** : les binaires produits doivent s'exécuter sur un Ubuntu
+  stock Canonical (main+universe, sans PPA). gcc ne peut plus utiliser le
+  PPA `ubuntu-toolchain-r/test` (les binaires linkent une libstdc++ plus
+  récente que la stock). Retour à **gcc-12 sur 22.04** et **gcc-14 sur
+  24.04** (max versions natives distro). Clang reste sur **clang-22 via
+  apt.llvm.org** (tool uniquement, lié à libstdc++ stock grâce à la
+  détection dynamique de `STDCPP_VER` dans `_common/clang-llvm.sh`).
+  Presets :
+    - `builder-gcc15-*` → `builder-gcc12-ubuntu2204` / `builder-gcc14-ubuntu2404`.
+    - `builder-clang-llvm22-*` inchangé.
+  Parents des `devel-*` mis à jour. `_common/clang-llvm.sh` corrigé :
+  `STDCPP_VER` lu depuis `dpkg -s libstdc++6` au lieu de la version max
+  dispo en apt.
+- **Retrait de la famille Debian bookworm** (presets, scripts, doc) : non
+  utilisée côté projet final. Les 4 presets correspondants et les scripts
+  `install/base/debian-bookworm.sh`, `install/builder/gcc-12-bookworm.sh`,
+  `install/builder/clang-llvm-21.sh` (ex-bookworm), `install/devel/debian-bookworm.sh`
+  sont supprimés.
+- **Renommé** `TODO_docker_images_optimization.md` →
+  `BENCHMARK_arm64_emulation.md`. Réécrit en **rapport de résultats** (plus
+  qu'un TODO) : méthodologie, tableaux de stabilité et perf, workarounds
+  échoués, analyse cause racine, recommandations d'usage, maintenance.
+- `run_docker_bench.sh` : réécrit pour tester les images **base** en amd64
+  natif vs arm64 émulé. Sections stabilité (sh/bash/python3) et perf
+  (sh loop, fork/exec, python startup, compile C). Variables d'env :
+  `BENCH_PLATFORMS`, `BENCH_TIMEOUT`, `BENCH_STABILITY_ONLY`, `BENCH_PERF_ONLY`.
+
 ### Added
 - `_common/helpers.sh`, `_common/builder.sh`, `_common/devel.sh`,
   `_common/clang-llvm.sh` : scripts partagés entre toutes les images.
