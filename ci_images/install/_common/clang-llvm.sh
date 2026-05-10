@@ -32,7 +32,7 @@ if [[ -z "$STDCPP_VER" ]]; then
   exit 1
 fi
 
-install_package  {clang,lld,llvm,clang-tidy}-${CLANG_VERSION} \
+install_package  {clang,lld,llvm,clang-tidy,clang-format}-${CLANG_VERSION} \
                  libclang*-${CLANG_VERSION}-dev \
                  lib{c++,c++abi,unwind}-${CLANG_VERSION}-dev
 
@@ -55,6 +55,7 @@ update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${CLANG_VERSION} ${C
 update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${CLANG_VERSION} ${CLANG_VERSION}
 update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${CLANG_VERSION} ${CLANG_VERSION}
 update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${CLANG_VERSION} ${CLANG_VERSION}
+update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${CLANG_VERSION} ${CLANG_VERSION}
 update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-${CLANG_VERSION} ${CLANG_VERSION}
 
 clear_cache
