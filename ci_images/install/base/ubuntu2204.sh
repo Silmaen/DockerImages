@@ -49,6 +49,14 @@ install_package libxcb-glx0 libxcb-render0 libxcb-render-util0 libxcb-xkb1 \
 install_package libwayland-client0 libwayland-cursor0 libwayland-egl1 \
                 libwayland-server0 xkb-data libdecor-0-0
 
+# OpenGL / EGL / GLES / GBM runtime. glfw and the Vulkan loader dlopen
+# libEGL.so.1 and libGL.so.1 at runtime, and the Wayland backend goes through
+# EGL + GBM. Without these, a binary that links or dlopens them builds fine in
+# the builder and dies at runtime on the base. The -dev counterparts live in
+# _common/builder.sh.
+install_package libgl1 libglx0 libglvnd0 libegl1 libegl-mesa0 libgles2 \
+                libgbm1 libopengl0
+
 # Remaining runtime libraries (GUI toolkit, TLS, sound, Vulkan) — the -dev
 # counterparts are added by the builder layer.
 install_package libgtk-3-0 libssl3 \

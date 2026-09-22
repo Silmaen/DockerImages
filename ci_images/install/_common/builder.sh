@@ -55,6 +55,10 @@ install_package libxcb-glx0-dev libxcb-render0-dev libxcb-render-util0-dev libxc
 install_package libwayland-dev libdecor-0-dev
 install_package libasound2-dev libpulse-dev libpipewire-0.3-dev libjack-dev \
                 portaudio19-dev libmysofa-dev libsndfile1-dev
+# GL / EGL / GLES / GBM headers, declared explicitly rather than relied upon as
+# transitive deps of libglfw3-dev — their runtime counterparts are in base/*.sh.
+install_package libgl-dev libglx-dev libegl-dev libgles-dev libgbm-dev \
+                libopengl-dev
 install_package libvulkan-dev vulkan-validationlayers libglfw3-dev
 
 # Projects bring their own python tooling through poetry, nothing to add here.

@@ -371,7 +371,7 @@ Sur l'hôte CI TeamCity (DinD), les réglages kernel doivent être faits sur la 
 | `GCC_VERSION must be set by the caller`                 | `_common/builder.sh` appelé sans les `export` du script de couche |
 | `GCC_VERSION not set and /etc/ci-toolchain.env unusable` | Un `devel/*` construit sur autre chose qu'un `builder-*`         |
 | `gcc --version` ≠ `g++ --version` dans une image        | Un paquet a tiré le méta `gcc` : rappeler `register_gcc_alternatives` en fin de script |
-| `lookup ... i/o timeout` pendant un buildx build        | Le conteneur builder `docker-container` a un resolver mort : `docker buildx rm <nom> && docker buildx create --use --driver docker-container` |
+| `lookup ... i/o timeout` pendant un buildx build        | Le conteneur `buildx_buildkit_*` a figé le `/etc/resolv.conf` de l'hôte au moment de sa création : si les resolvers ont changé depuis (VPN, changement de réseau), il pointe dans le vide. `docker restart buildx_buildkit_<builder>0` régénère le resolv.conf **et préserve le cache** ; recréer le builder n'est pas nécessaire. |
 
 Pour tout autre problème, consulter `BUGS.md` (audit statique) et
 `BENCHMARK_arm64_emulation.md` (roadmap perf).

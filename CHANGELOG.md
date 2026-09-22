@@ -54,7 +54,12 @@ Les versions correspondent aux tags de release (si / quand des tags sont posés)
   habituellement `/usr/bin/cc` et `/usr/bin/c++`, attendus par les `configure`
   autotools.
 - Codename distro centralisé dans le helper `distro_codename`.
-- Doc alignée : `README.md` (§1, §3.1, §3.2, §4, §5.1, §6, §10), `CLAUDE.md`,
+- `README.md` §9 (dépannage) : diagnostic du `lookup ... i/o timeout` en cours
+  de build. Le conteneur `buildx_buildkit_*` fige le `/etc/resolv.conf` de
+  l'hôte à sa création ; si les resolvers changent (VPN, réseau), il pointe
+  dans le vide. `docker restart buildx_buildkit_<builder>0` suffit et préserve
+  le cache.
+- Doc alignée : `README.md` (§1, §3.1, §3.2, §4, §5.1, §6, §9), `CLAUDE.md`,
   `.claude/rules/presets.md`, `.claude/rules/scripts-install.md`.
 
 ### Fixed (2026-09-22)
@@ -117,6 +122,17 @@ Les versions correspondent aux tags de release (si / quand des tags sont posés)
   était pas).
 - **`libdecor-0-dev` ajouté à `_common/builder.sh`**, à côté de
   `libwayland-dev`. Retrait du `libx11-dev` en double.
+- **Runtime OpenGL / EGL / GLES / GBM dans `base/*.sh`** : `libgl1`, `libglx0`,
+  `libglvnd0`, `libegl1`, `libegl-mesa0`, `libgles2`, `libgbm1`, `libopengl0`.
+  Trouvé par audit miroir `base` ↔ `builder` : `libglfw3-dev` et
+  `libvulkan-dev` étaient présents côté build, mais `libegl1` / `libgles2` /
+  `libgbm1` / `libopengl0` manquaient côté runtime. glfw *dlopen*
+  `libEGL.so.1` et son backend Wayland passe par EGL + GBM, donc un binaire
+  compilait et mourait à l'exécution sur la base.
+- Les en-têtes correspondants (`libgl-dev`, `libglx-dev`, `libegl-dev`,
+  `libgles-dev`, `libgbm-dev`, `libopengl-dev`) sont déclarés **explicitement**
+  dans `_common/builder.sh` au lieu d'être obtenus comme dépendances
+  transitives de `libglfw3-dev`.
 
 - **Famille Ubuntu 26.04** (`resolute`) : `base-ubuntu2604`,
   `builder-ubuntu2604`, `devel-ubuntu2604`. Toolchains : **gcc-15** (stock
