@@ -5,9 +5,11 @@ images Docker de ce repo lorsqu'elles sont exécutées en `linux/arm64` émulé 
 QEMU user-mode sur un hôte amd64 (cas TeamCity DinD + poste dev amd64),
 comparées à la même image en `linux/amd64` natif.
 
-Le protocole est reproductible via `./run_docker_bench.py` (à la racine du
-repo). Les mesures ci-dessous doivent être retesstées après chaque upgrade
-majeur d'hôte (kernel, `qemu-user-static`).
+⚠️ L'outillage de bench (`run_docker_bench.py`, `run_docker_build.sh`) a été
+**retiré du repo** ; ce document reste comme rapport historique. Le protocole est
+décrit en §3 et §8 et doit être rejoué à la main. Les mesures ci-dessous
+doivent être retestées après chaque upgrade majeur d'hôte (kernel,
+`qemu-user-static`).
 
 ---
 
@@ -109,8 +111,9 @@ master QEMU, sans patches Debian) **ne corrige pas** le crash bash sur
 
 ## 3. Résultats de performance
 
-Microbench reproductible via `./run_docker_bench.py` (dash utilisé partout pour
-éviter le crash bash en glibc < 2.39).
+Microbench rejouable à la main (dash utilisé partout pour éviter le crash bash
+en glibc < 2.39) — le script `run_docker_bench.py` qui l'automatisait n'est plus
+dans le repo.
 
 ### 3.1 Conventions de ratio
 
@@ -322,7 +325,8 @@ Ubuntu 24.04 (glibc 2.36 < 2.39).
 
 ### 6.5 Optimisations runtime déjà en place
 
-Dans `run_docker_build.sh` :
+Options `docker run` utilisées pour ces mesures (elles venaient du wrapper
+`run_docker_build.sh`, retiré du repo — à reporter à la main) :
 
 - `--tmpfs /build:size=8g` + `--tmpfs /tmp` → I/O en RAM (gain ×2-3).
 - `--security-opt seccomp=unconfined` → réduit l'overhead syscall QEMU.
@@ -375,9 +379,8 @@ TeamCity ni dans son DinD interne).
 
 ```bash
 dpkg -l | grep qemu-user-static    # attendu 1:10.2.1-*
-./run_docker_bench.py              # relance la suite complète
-# Comparer aux mesures du §2/§3 — si bash arm64 rc=0 en 22.04 / bookworm,
-# le fix upstream est effectif.
+# Rejouer à la main les mesures du §2/§3 (plus de script de bench dans le repo).
+# Si bash arm64 rc=0 en 22.04 / bookworm, le fix upstream est effectif.
 ```
 
 ---

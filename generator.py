@@ -34,43 +34,56 @@ def _preset(image_name: str, base: str, setup: str,
 
 presets = {
     #
-    # UBUNTU 22.04
-    # gcc-12 natif (main) — libstdc++6 stock 12.3.0.
-    # clang-22 via apt.llvm.org, linké à la libstdc++ stock → binaires
-    # exécutables sur un 22.04 stock sans PPA.
+    # Trois couches par distro :
+    #   base    — runtime seul (python, poetry, libs runtime, aucun -dev)
+    #   builder — LE build : gcc + clang + cmake/ninja + toutes les libs -dev
+    #   devel   — builder + debuggers / analyse (gdb, lldb, valgrind, ...)
     #
+    # gcc = version stock de la distro (contrainte de portabilité : les binaires
+    # doivent tourner sur un Ubuntu stock sans PPA). clang = 22 partout, pris
+    # sur apt.llvm.org quand la distro est trop vieille, sinon dans la distro.
+    #
+
+    # UBUNTU 22.04 — gcc-12 stock + clang-22 (apt.llvm.org)
     "base-ubuntu2204":
-        _preset("base-ubuntu2204",             "ubuntu:22.04",         "base/ubuntu2204"),
-
-    "builder-gcc12-ubuntu2204":
-        _preset("builder-gcc12-ubuntu2204",    "base-ubuntu2204",      "builder/gcc-12"),
-    "builder-clang-llvm22-ubuntu2204":
-        _preset("builder-clang-llvm22-ubuntu2204", "base-ubuntu2204",  "builder/clang-llvm-22"),
-
-    # devel-ubuntu2204 fusionne les deux toolchains (gcc + clang) par-dessus
-    # le builder gcc ; clang-22 est ajouté via apt.llvm.org.
+        _preset("base-ubuntu2204",    "ubuntu:22.04",         "base/ubuntu2204"),
+    "builder-ubuntu2204":
+        _preset("builder-ubuntu2204", "base-ubuntu2204",      "builder/ubuntu2204"),
     "devel-ubuntu2204":
-        _preset("devel-ubuntu2204",            "builder-gcc12-ubuntu2204",      "devel/ubuntu2204"),
+        _preset("devel-ubuntu2204",   "builder-ubuntu2204",   "devel/ubuntu2204"),
 
-    #
-    # UBUNTU 24.04
-    # gcc-14 natif (universe) — libstdc++6 stock 14.2.0.
-    # clang-22 via apt.llvm.org, linké à la libstdc++ stock → binaires
-    # exécutables sur un 24.04 stock sans PPA.
-    #
+    # UBUNTU 24.04 — gcc-14 stock + clang-22 (apt.llvm.org)
     "base-ubuntu2404":
-        _preset("base-ubuntu2404",             "ubuntu:24.04",         "base/ubuntu2404"),
-
-    "builder-gcc14-ubuntu2404":
-        _preset("builder-gcc14-ubuntu2404",    "base-ubuntu2404",      "builder/gcc-14"),
-    "builder-clang-llvm22-ubuntu2404":
-        _preset("builder-clang-llvm22-ubuntu2404", "base-ubuntu2404",  "builder/clang-llvm-22"),
-
-    # devel-ubuntu2404 fusionne les deux toolchains (gcc + clang) par-dessus
-    # le builder gcc ; clang-22 est ajouté via apt.llvm.org.
+        _preset("base-ubuntu2404",    "ubuntu:24.04",         "base/ubuntu2404"),
+    "builder-ubuntu2404":
+        _preset("builder-ubuntu2404", "base-ubuntu2404",      "builder/ubuntu2404"),
     "devel-ubuntu2404":
-        _preset("devel-ubuntu2404",            "builder-gcc14-ubuntu2404",      "devel/ubuntu2404"),
+        _preset("devel-ubuntu2404",   "builder-ubuntu2404",   "devel/ubuntu2404"),
+
+    # UBUNTU 26.04 — gcc-15 stock + clang-22 (paquets distro, universe)
+    "base-ubuntu2604":
+        _preset("base-ubuntu2604",    "ubuntu:26.04",         "base/ubuntu2604"),
+    "builder-ubuntu2604":
+        _preset("builder-ubuntu2604", "base-ubuntu2604",      "builder/ubuntu2604"),
+    "devel-ubuntu2604":
+        _preset("devel-ubuntu2604",   "builder-ubuntu2604",   "devel/ubuntu2604"),
 }
+
+
+class CommandError(RuntimeError):
+    """A command run through :func:`run_command` failed.
+
+    Raised instead of killing the interpreter, so that this module stays
+    importable from another script and callers can decide what to do.
+    """
+
+    def __init__(self, cmd: str, returncode: int, cause: Exception = None):
+        if cause is None:
+            super().__init__(f"'{cmd}' failed with exit code {returncode}")
+        else:
+            super().__init__(f"'{cmd}' could not be run: {cause}")
+        self.cmd = cmd
+        self.returncode = returncode
 
 
 def run_command(cmd: str, output: bool = False, forced: bool = False, try_run: bool = False):
@@ -78,36 +91,37 @@ def run_command(cmd: str, output: bool = False, forced: bool = False, try_run: b
     Simple wrapper to safely run commands.
     :param cmd: The command to execute.
     :param output: If we want the output as string.
-    :return: Eventually the output string
     :param forced: Force execution even in dry run
+    :param try_run: Only warn (and return None) instead of raising on failure.
+    :return: Eventually the output string
+    :raise CommandError: The command failed and try_run is False.
     """
     from subprocess import run, PIPE
 
+    if dry_run and not forced:
+        print(f">> {cmd}")
+        return None
+
     try:
-        if dry_run and not forced:
-            if output:
-                print(f">> {cmd}")
-            else:
-                print(f">> {cmd}")
+        if output:
+            ret = run(cmd, shell=True, stdout=PIPE)
         else:
-            if output:
-                ret = run(cmd, shell=True, stdout=PIPE)
-            else:
-                ret = run(cmd, shell=True)
-            if ret.returncode != 0:
-                if not try_run:
-                    print(f"ERROR: '{cmd}' Error code : {ret.returncode}.", file=stderr)
-                    exit(-666)
-                else:
-                    print(f"WARNING: '{cmd}' Error code : {ret.returncode}.", file=stderr)
-            if output:
-                return ret.stdout.decode().strip()
+            ret = run(cmd, shell=True)
     except Exception as err:
-        if not try_run:
-            print(f"ERROR: Exception during '{cmd}': {err}.", file=stderr)
-            exit(-666)
-        else:
+        if try_run:
             print(f"WARNING: Exception during '{cmd}': {err}.", file=stderr)
+            return None
+        raise CommandError(cmd, -1, err) from err
+
+    if ret.returncode != 0:
+        if try_run:
+            print(f"WARNING: '{cmd}' Error code : {ret.returncode}.", file=stderr)
+            return None
+        raise CommandError(cmd, ret.returncode)
+
+    if output:
+        return ret.stdout.decode().strip()
+    return None
 
 
 def get_git_hash():
@@ -212,35 +226,35 @@ def process(
     :param do_push: If we push image to registry.
     :param aliased: If we alias the image to latest.
     :param dockerfile_path: Path to the Dockerfile to use.
+    :raise CommandError: The build failed.
     """
-    try:
-        # force re-pull base image (in case of updates) ; tolerate failure so that
-        # building a private-registry chain for the first time (when the base is not
-        # yet published) still proceeds with whatever is already cached locally.
-        run_command(f"docker pull {base}", try_run=True)
-        # build image
-        full_image = f"{registry}/{namespace}/{output}"
-        if tag not in [None, ""]:
-            image_tags = f" -t {full_image}:{tag}"
-            if aliased:
-                image_tags += f" -t {full_image}:latest"
-        else:
-            image_tags = f" -t {full_image}"
-        plat = ""
-        if len(platforms) > 0:
-            plat = f"--platform={','.join(platforms)} "
-        b_args = f"--build-arg BASE_IMAGE={base} --build-arg SETUP={setup}"
-        if do_push:
-            b_args += " --push"
-        cmd = f"docker buildx build --progress=plain {plat}{b_args}{image_tags} {dockerfile_path}"
-        run_command(cmd)
-    except Exception as err:
-        print(f"ERROR: Exception occurs during run: {err}", file=stderr)
+    # force re-pull base image (in case of updates) ; tolerate failure so that
+    # building a private-registry chain for the first time (when the base is not
+    # yet published) still proceeds with whatever is already cached locally.
+    run_command(f"docker pull {base}", try_run=True)
+    # build image
+    full_image = f"{registry}/{namespace}/{output}"
+    if tag not in [None, ""]:
+        image_tags = f" -t {full_image}:{tag}"
+        if aliased:
+            image_tags += f" -t {full_image}:latest"
+    else:
+        image_tags = f" -t {full_image}"
+    plat = ""
+    if len(platforms) > 0:
+        plat = f"--platform={','.join(platforms)} "
+    b_args = f"--build-arg BASE_IMAGE={base} --build-arg SETUP={setup}"
+    if do_push:
+        b_args += " --push"
+    cmd = f"docker buildx build --progress=plain {plat}{b_args}{image_tags} {dockerfile_path}"
+    run_command(cmd)
 
 
 def main():
     """
     Main entry Point
+    :raise CommandError: A docker command failed (translated into an exit code
+        by the CLI entry point below).
     """
     from argparse import ArgumentParser
 
@@ -380,7 +394,7 @@ def main():
                 f"ERROR: Unsupported platform {platform}. possibles are: {p_platforms}",
                 file=stderr,
             )
-            exit(-666)
+            return -1
     print(
         f"Generating docker image {registry}/{namespace}/{output}:{tag} "
         f"(from base {base_image}) for the platforms {platforms}."
@@ -408,4 +422,8 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    try:
+        exit(main())
+    except CommandError as error:
+        print(f"ERROR: {error}", file=stderr)
+        exit(-1)

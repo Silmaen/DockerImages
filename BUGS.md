@@ -8,27 +8,27 @@ Statuts :
 
 ---
 
-## B-15 — `run_command` : `exit(-666)` rend le code non-testable — **OUVERT**
+Aucun ticket ouvert.
 
-**Fichier** : `generator.py`, fonction `run_command`.
+Derniers résolus (cf `git log`) :
 
-La fonction met le process à mort via `exit(-666)` dès qu'une commande échoue
-hors `try_run=True`. Pas d'exception propagée. Conséquences :
-
-- Impossible d'importer `generator.py` depuis un autre script sans risquer de
-  tuer le caller sur la moindre erreur docker.
-- `try`/`except` englobants inefficaces.
-
-**Piste de fix** : lever une exception dédiée (`CommandError`) depuis
-`run_command`, laisser `main()` appeler `sys.exit` au plus haut niveau.
+- **B-15** — `generator.py` : `run_command` tuait le process via `exit(-666)`,
+  rendant le module non importable et `process()` avalait l'erreur (donc
+  `all_ci.sh` continuait sur une chaîne cassée). Remplacé par une exception
+  `CommandError`, traduite en code retour par l'entrée CLI.
+- **B-16** — alternative `ld.lld` manquante : `gcc -fuse-ld=lld` échouait
+  (`collect2: fatal error: cannot find 'ld'`).
+- **B-17** — la couche `devel` cassait le gcc épinglé par le `builder` :
+  `lcov` dépend du méta-paquet `gcc` non versionné, qui écrase `/usr/bin/gcc`.
+  Les alternatives sont désormais réaffirmées (`--force`) en fin de
+  `_common/devel.sh`.
 
 ---
 
 ## Observations (non-bugs)
 
-- Pas de CI automatique (GitHub Actions / TeamCity) visible dans le repo. Un job
-  `./generator.py --preset X --dry-run` sur chaque PR détecterait les presets
-  cassés avant merge.
-- `run_docker_build.sh` et `run_docker_bench.py` à la racine viennent du repo
-  sœur `OwlDependencies`. Leur place ici est à clarifier : outils de test
-  d'image, ou artefacts destinés aux consumers ?
+- **Absence de CI : volontaire.** Pas de workflow GitHub Actions / TeamCity, pas
+  de job `--dry-run` sur les PR. Ne pas le reproposer.
+- Les paquets qui fournissent `7z` diffèrent par distro : `p7zip-full` sur
+  22.04 et 24.04, `7zip` sur 26.04 (qui a retiré tous les paquets `p7zip*`).
+  Géré dans les `base/*.sh`, à re-vérifier à chaque nouvelle distro.

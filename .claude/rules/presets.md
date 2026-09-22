@@ -11,25 +11,31 @@ def _preset(image_name, base, setup, platforms=("linux/amd64", "linux/arm64")):
 
 - Si `base` est un nom court (pas de `:` ni `/`), le registry + namespace sont
   préfixés.
-- Sinon (`ubuntu:24.04`, `debian:bookworm-slim`), la valeur est utilisée telle
+- Sinon (`ubuntu:26.04`, `debian:bookworm-slim`), la valeur est utilisée telle
   quelle.
 
 ## Déclaration
 
+Trois presets par distro, un par couche :
+
 ```python
-"<layer>-<toolchain>-<distro><version>":
-    _preset("<layer>-<toolchain>-<distro><version>",
-            "<base short name | upstream:tag>",
-            "<layer>/<setup script sans .sh>"),
+"base-<distro><version>":
+    _preset("base-<distro><version>",    "<upstream:tag>",             "base/<distro><version>"),
+"builder-<distro><version>":
+    _preset("builder-<distro><version>", "base-<distro><version>",     "builder/<distro><version>"),
+"devel-<distro><version>":
+    _preset("devel-<distro><version>",   "builder-<distro><version>",  "devel/<distro><version>"),
 ```
 
 ## Nommage
 
 - `<layer>` ∈ `{base, builder, devel}`.
-- `<toolchain>` : `gcc14`, `clang18`, `clang-llvm-18`, etc.
-  - `clang-llvm-N` (avec tirets) = build via `apt.llvm.org`.
-  - `clang-N` (sans `llvm`) = paquet natif de la distro.
-- `<distro><version>` : `ubuntu2204`, `ubuntu2404`, futur `debian-bookworm`.
+- `<distro><version>` : `ubuntu2204`, `ubuntu2404`, `ubuntu2604`, futur
+  `debian-bookworm`.
+- **Pas de segment toolchain dans le nom** : depuis le refactor « builder =
+  environnement de build complet », chaque builder contient gcc **et** clang.
+  Les versions se lisent dans `install/builder/<distro>.sh`, pas dans le nom de
+  l'image.
 
 ## Checklist pour ajouter un preset
 
@@ -42,14 +48,12 @@ def _preset(image_name, base, setup, platforms=("linux/amd64", "linux/arm64")):
 
 ## Ordre dans `all_ci.sh`
 
-La chaîne doit être respectée :
+La chaîne est linéaire, une image par couche :
 
 ```
 base-<distro>
-  ├── builder-<T1>-<distro>
-  │     └── devel-<T1>-<distro>
-  └── builder-<T2>-<distro>
-        └── devel-<T2>-<distro>
+  └── builder-<distro>
+        └── devel-<distro>
 ```
 
 Sinon `docker pull` sur la base échouera (certes maintenant toléré via

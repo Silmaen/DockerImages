@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Devel image for Ubuntu 24.04 — debug and analysis tooling on top of
-# builder-ubuntu2404, which already provides both toolchains (gcc + clang),
+# Devel image for Ubuntu 26.04 — debug and analysis tooling on top of
+# builder-ubuntu2604, which already provides both toolchains (gcc + clang),
 # cmake, ninja and every -dev library.
 #
 # Adds: gdb, lldb, valgrind, strace, ltrace, gperf, lcov, cppcheck, bear, perf

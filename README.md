@@ -18,31 +18,30 @@ d'installation** sélectionné par un paramètre — l'ensemble est orchestré p
 5. [Le `generator.py`](#5-le-generatorpy)
 6. [Ajouter une nouvelle image](#6-ajouter-une-nouvelle-image)
 7. [Multi-arch & QEMU](#7-multi-arch--qemu)
-8. [Outils auxiliaires](#8-outils-auxiliaires)
-9. [Pré-requis hôte](#9-pré-requis-hôte)
-10. [Dépannage](#10-dépannage)
+8. [Pré-requis hôte](#8-pré-requis-hôte)
+9. [Dépannage](#9-dépannage)
 
 ---
 
 ## 1. Sémantique des trois couches
 
-| Couche    | Rôle                                                             | Contenu typique                                                                                   |
-|-----------|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
-| `base`    | **Run** : exécuter l'application + ses tests                     | Python, `poetry`, libs runtime (sans `-dev`), outils d'archive, `git`, locale, utilisateur `user` |
-| `builder` | **CI / build** : compiler un projet avec **un seul** toolchain   | `base` + **un** toolchain (gcc natif **ou** clang-22 apt.llvm.org) + `cmake`, `ninja`, `make`, `ccache`, `mold`, libs `-dev`, `depmanager`, `gcovr` |
-| `devel`   | **Poste dev** : un **seul** conteneur pour tout le workflow dev  | `builder-gcc` + **l'autre** toolchain (clang-22) + debuggers (`gdb`, `lldb`, `valgrind`, `strace`, `ltrace`, `lcov`, `cppcheck`, `clang-format`, `bear`, `tmux`, `less`, `vim`, `htop`, `git-lfs`) |
+| Couche    | Rôle                                                   | Contenu typique                                                                                   |
+|-----------|--------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| `base`    | **Run** : exécuter l'application + ses tests           | Python, `poetry`, libs runtime (**aucun `-dev`**, aucun compilateur), outils d'archive, `git`, locale, utilisateur `user` |
+| `builder` | **CI / build** : *l'*environnement de compilation      | `base` + **les deux** toolchains (gcc stock **et** clang-22) + `cmake`, `ninja`, `make`, `ccache`, `mold`, `patchelf`, `doxygen`, `pkg-config` + **toutes** les libs `-dev` |
+| `devel`   | **Poste dev** : builder + outillage de debug / analyse | `builder` + `gdb`, `lldb-22`, `valgrind`, `strace`, `ltrace`, `gperf`, `lcov`, `cppcheck`, `bear`, `perf`, `tmux`, `less`, `vim`, `htop`, `git-lfs` |
 
-- `base` → `builder-gcc-*` et `builder-clang-*` (deux images CI séparées, chacune
-  un seul toolchain, pour garder les images builder slim).
-- `devel-<distro>` descend de `builder-gcc-*` et **ajoute clang + les debuggers** →
-  un seul conteneur dev qui compile dans les deux configurations et debug tout.
+Une **seule** image par couche et par distro : `base-<distro>` → `builder-<distro>`
+→ `devel-<distro>`. Le builder embarque gcc **et** clang, un job CI choisit son
+compilateur via `CC`/`CXX` sans changer d'image.
 
 Distributions publiées :
 
-| Distro       | glibc | Compat runtime 24.04   | arm64 émulé QEMU                                             |
-|--------------|-------|------------------------|---------------------------------------------------------------|
-| Ubuntu 22.04 | 2.35  | ✓ (libstdc++ séparée)  | ✓ sur hôte 26.04 LTS ; ❌ bash SIGSEGV sur 24.04 host (QEMU 8.2) |
-| Ubuntu 24.04 | 2.39  | ✓                      | ✓ sur toute version QEMU                                      |
+| Distro       | glibc | gcc (stock) | clang            | arm64 émulé QEMU                                                 |
+|--------------|-------|-------------|------------------|-------------------------------------------------------------------|
+| Ubuntu 22.04 | 2.35  | 12.3.0      | 22 (apt.llvm.org)| ✓ sur hôte 26.04 LTS ; ❌ bash SIGSEGV sur 24.04 host (QEMU 8.2)  |
+| Ubuntu 24.04 | 2.39  | 14.2.0      | 22 (apt.llvm.org)| ✓ sur toute version QEMU                                          |
+| Ubuntu 26.04 | 2.43  | 15.2.0      | 22 (universe)    | ✓ sur toute version QEMU                                          |
 
 ---
 
@@ -53,15 +52,13 @@ Distributions publiées :
 ./generator.py --preset base-ubuntu2404
 
 # Construire + pousser + alias :latest
-./generator.py --preset builder-clang18-ubuntu2404 --push --alias-latest
+./generator.py --preset builder-ubuntu2404 --push --alias-latest
 
 # Reconstruire tout le jeu standard
 ./all_ci.sh
 
-# Tourner un conteneur de build avec tmpfs + cache
-./run_docker_build.sh
-PLATFORM=linux/amd64 ./run_docker_build.sh
-IMAGE=mon-builder:tag ./run_docker_build.sh
+# Lister les presets disponibles
+./generator.py --preset inexistant
 ```
 
 ---
@@ -74,15 +71,13 @@ IMAGE=mon-builder:tag ./run_docker_build.sh
 graph TD
     R[Repo root] --> G[generator.py]
     R --> A[all_ci.sh]
-    R --> B[run_docker_build.sh]
-    R --> N[run_docker_bench.py]
     R --> C[ci_images/]
     C --> D[Dockerfile]
     C --> I[install/]
-    I --> CO[_common/<br/>helpers.sh<br/>builder.sh<br/>devel.sh<br/>clang-llvm.sh]
-    I --> IB[base/<br/>ubuntu2204.sh<br/>ubuntu2404.sh]
-    I --> IR[builder/<br/>gcc-12.sh gcc-14.sh<br/>clang-llvm-22.sh]
-    I --> IV[devel/<br/>ubuntu2204.sh<br/>ubuntu2404.sh]
+    I --> CO[_common/<br/>helpers.sh<br/>builder.sh<br/>gcc.sh<br/>clang.sh<br/>devel.sh]
+    I --> IB[base/<br/>ubuntu2204.sh<br/>ubuntu2404.sh<br/>ubuntu2604.sh]
+    I --> IR[builder/<br/>ubuntu2204.sh<br/>ubuntu2404.sh<br/>ubuntu2604.sh]
+    I --> IV[devel/<br/>ubuntu2204.sh<br/>ubuntu2404.sh<br/>ubuntu2604.sh]
 ```
 
 ### 3.2 Partage de code via `install/_common/`
@@ -93,20 +88,41 @@ l'image au moment du build ; chaque script final peut donc appeler son commun :
 
 ```mermaid
 graph LR
-    S1[builder/gcc-14.sh] -->|bash| CB[_common/builder.sh]
-    S2[builder/clang-llvm-18.sh] -->|bash| CB
-    S2 -->|bash + CLANG_VERSION=18| CC[_common/clang-llvm.sh]
-    S3[devel/clang-18.sh] -->|bash| CD[_common/devel.sh]
-    S4[devel/gcc.sh] -->|bash| CD
+    S1["builder/ubuntu2404.sh<br/>GCC_VERSION=14<br/>CLANG_VERSION=22<br/>CLANG_SOURCE=llvm"] -->|bash| CB[_common/builder.sh]
+    CB -->|bash| CG[_common/gcc.sh]
+    CB -->|bash| CC[_common/clang.sh]
+    S2["devel/ubuntu2404.sh"] -->|bash| CD[_common/devel.sh]
+    CB -.->|"écrit /etc/ci-toolchain.env"| CD
     CB -->|source| CH[_common/helpers.sh]
+    CG -->|source| CH
     CC -->|source| CH
     CD -->|source| CH
 ```
 
-- `helpers.sh` : fonctions bash `update_package_list` / `install_package` / `clear_cache`.
-- `builder.sh` : tout ce qui est commun aux images *builder* (tools, `-dev` libs, Kitware repo, depmanager).
-- `devel.sh` : tout ce qui est commun aux images *devel* (debuggers, profilers, outils shell).
-- `clang-llvm.sh` : template paramétrique pour toutes les variantes `apt.llvm.org`.
+- `helpers.sh` : fonctions bash `update_package_list` / `install_package` /
+  `clear_cache` / `distro_codename` / `setup_default_user`.
+- `builder.sh` : tout le commun *builder* (tools, `-dev` libs, repo Kitware) puis
+  appelle `gcc.sh` **et** `clang.sh` — c'est lui qui fait qu'un builder embarque
+  les deux toolchains.
+- `gcc.sh` : installeur gcc paramétrique (`GCC_VERSION`) + `update-alternatives`.
+- `clang.sh` : installeur clang paramétrique (`CLANG_VERSION`,
+  `CLANG_SOURCE=distro|llvm`), lie clang à `libstdc++-${STDCPP_VER}` (par défaut
+  `GCC_VERSION`).
+- `devel.sh` : outillage de debug / analyse commun aux images *devel*, dont
+  `lldb-${CLANG_VERSION}`. Il lit les versions dans `/etc/ci-toolchain.env`,
+  écrit par `builder.sh` dans l'image parente — un script `devel/*.sh` n'a donc
+  aucune version à répéter.
+
+Les scripts de chaque couche ne contiennent donc plus que la déclaration des
+versions :
+
+```bash
+# builder/ubuntu2604.sh
+export GCC_VERSION=15
+export CLANG_VERSION=22
+export CLANG_SOURCE=distro
+bash /tmp/install/_common/builder.sh
+```
 
 ### 3.3 Flux de build
 
@@ -153,47 +169,45 @@ USER user
 
 ## 4. Chaîne de dépendances
 
-**Règle** : pour chaque Ubuntu on garde **deux compilateurs** — un gcc et un clang.
-Le clang passe par la version LLVM apt.llvm.org si la version distro est trop
-ancienne (ex: Ubuntu 22.04 → clang-llvm-18), sinon par la version distro
-(Ubuntu 24.04 → clang-18).
+**Règle** : chaîne linéaire d'une seule image par couche.
+
+```mermaid
+graph LR
+    U[ubuntu:XX.04] --> B["base-ubuntuXXXX<br/>runtime seul"]
+    B --> R["builder-ubuntuXXXX<br/>gcc + clang + cmake + libs -dev"]
+    R --> D["devel-ubuntuXXXX<br/>+ gdb / lldb / valgrind / analyse"]
+```
 
 Règle dure : les binaires produits doivent s'exécuter sur un Ubuntu **stock
 Canonical (main + universe)** de la même révision — pas de PPA exigé côté
 utilisateur final. Cela impose `gcc` natif stock et clang lié à la
 libstdc++ stock.
 
-### 4.1 Famille Ubuntu 22.04
+### 4.1 Toolchains par famille
 
-```mermaid
-graph LR
-    U2204[ubuntu:22.04] --> B2204[base-ubuntu2204]
-    B2204 --> G12[builder-gcc12-ubuntu2204<br/>main natif]
-    B2204 --> C22[builder-clang-llvm22-ubuntu2204<br/>apt.llvm.org + libstdc++ stock]
-    G12 --> D[devel-ubuntu2204<br/>gcc-12 + clang-22 + debuggers]
-```
+| Famille      | base           | gcc                      | clang                                  | devel            |
+|--------------|----------------|--------------------------|----------------------------------------|------------------|
+| Ubuntu 22.04 | `ubuntu:22.04` | `gcc-12` (main, stock)   | `clang-22` — apt.llvm.org (distro ≤ 15)| `devel-ubuntu2204` |
+| Ubuntu 24.04 | `ubuntu:24.04` | `gcc-14` (stock)         | `clang-22` — apt.llvm.org (distro ≤ 18)| `devel-ubuntu2404` |
+| Ubuntu 26.04 | `ubuntu:26.04` | `gcc-15` (main, stock)   | `clang-22` — **universe**, pas de repo tiers | `devel-ubuntu2604` |
 
-### 4.2 Famille Ubuntu 24.04
+Le choix se fait dans `install/builder/<distro>.sh` via trois variables
+(`GCC_VERSION`, `CLANG_VERSION`, `CLANG_SOURCE`) — aucun autre endroit à
+toucher.
 
-```mermaid
-graph LR
-    U2404[ubuntu:24.04] --> B2404[base-ubuntu2404]
-    B2404 --> G14[builder-gcc14-ubuntu2404<br/>universe natif]
-    B2404 --> C22[builder-clang-llvm22-ubuntu2404<br/>apt.llvm.org + libstdc++ stock]
-    G14 --> D[devel-ubuntu2404<br/>gcc-14 + clang-22 + debuggers]
-```
+### 4.2 Portabilité runtime — garantie
 
-### 4.3 Portabilité runtime — garantie
+| Distro builder | libstdc++ linkée à la compilation | libstdc++6 stock du runtime | Compat |
+|----------------|-----------------------------------|-----------------------------|--------|
+| Ubuntu 22.04   | `libstdc++-12-dev` (12.3.0)       | 12.3.0                      | ✓      |
+| Ubuntu 24.04   | `libstdc++-14-dev` (14.2.0)       | 14.2.0                      | ✓      |
+| Ubuntu 26.04   | `libstdc++-15-dev` (15.2.0)       | snapshot gcc-16 (sur-ensemble ABI) | ✓ |
 
-| Distro builder | libstdc++6 linkée | Runtime stock Canonical |
-|----------------|-------------------|--------------------------|
-| Ubuntu 22.04   | 12.3.0 (jammy-updates/main) | ✓ tourne out of the box |
-| Ubuntu 24.04   | 14.2.0 (noble-updates/main) | ✓ tourne out of the box |
-
-Le template `_common/clang-llvm.sh` détecte dynamiquement la version de
-`libstdc++6` déjà installée par `base-*` et installe `libstdc++-${N}-dev`
-en conséquence — pas de dérive vers une libstdc++ plus récente que la
-stock distro.
+`_common/clang.sh` lie clang à `libstdc++-${STDCPP_VER}-dev` où `STDCPP_VER`
+vaut par défaut `GCC_VERSION` — donc exactement la libstdc++ du gcc stock
+choisi, jamais une plus récente. (26.04 ship un `libstdc++6` construit depuis
+un snapshot gcc-16 : s'aligner sur `GCC_VERSION` évite d'aller chercher les
+en-têtes d'un gcc non-stock.)
 
 ---
 
@@ -204,8 +218,8 @@ stock distro.
 Chaque image est déclarée dans le dict `presets` via le helper `_preset` :
 
 ```python
-"builder-clang18-ubuntu2404":
-    _preset("builder-clang18-ubuntu2404", "base-ubuntu2404", "builder/clang-18"),
+"builder-ubuntu2404":
+    _preset("builder-ubuntu2404", "base-ubuntu2404", "builder/ubuntu2404"),
 ```
 
 Si `base` ne contient ni `:` ni `/`, `_preset` le considère comme un nom interne et
@@ -249,30 +263,35 @@ flowchart TD
 
 ## 6. Ajouter une nouvelle image
 
-### 6.1 Nouveau compilateur, base existante
+### 6.1 Changer de version de toolchain sur une distro existante
 
-```mermaid
-flowchart LR
-    A[1. Écrire install/builder/&lt;toolchain&gt;.sh<br/>qui source _common/builder.sh] --> B[2. Écrire install/devel/&lt;toolchain&gt;.sh si dev]
-    B --> C[3. Ajouter les presets<br/>dans generator.py]
-    C --> D[4. --dry-run]
-    D --> E[5. Test natif]
-    E --> F[6. Test arm64 émulé]
-    F --> G[7. Ajouter à all_ci.sh]
-    G --> H[8. Commit + push]
-```
+Éditer les trois `export` de `install/builder/<distro>.sh`, puis
+`install/devel/<distro>.sh` si `CLANG_VERSION` change (il pilote `lldb-N`).
+Rien d'autre.
 
 ### 6.2 Nouvelle distro
 
-En plus des étapes ci-dessus :
+```mermaid
+flowchart LR
+    A[1. install/base/&lt;distro&gt;.sh<br/>runtime seul] --> B[2. install/builder/&lt;distro&gt;.sh<br/>3 export + _common/builder.sh]
+    B --> C[3. install/devel/&lt;distro&gt;.sh<br/>CLANG_VERSION + _common/devel.sh]
+    C --> D[4. 3 presets dans generator.py]
+    D --> E[5. --dry-run]
+    E --> F[6. Test natif]
+    F --> G[7. Test arm64 émulé]
+    G --> H[8. Ajouter à all_ci.sh]
+    H --> I[9. Commit]
+```
 
-1. Créer `install/base/<distro>.sh` qui **doit** :
-   - créer (ou renommer) l'utilisateur `user` avec un `$HOME` valide (le Dockerfile
-     termine par `USER user`) ;
-   - installer Python + poetry ;
-   - installer les **runtime libs** (pas les `-dev`).
-2. Vérifier que `apt.llvm.org` supporte le codename pour les futurs `clang-llvm-*`.
-3. Documenter l'ajout dans le README (diagramme §4) et dans `CLAUDE.md`.
+Le script `install/base/<distro>.sh` **doit** :
+
+- appeler `setup_default_user` (le Dockerfile termine par `USER user`) ;
+- installer Python + poetry ;
+- installer les **runtime libs** (pas les `-dev`) — attention aux renommages
+  (`t64`, `p7zip` → `7zip`, paquets retirés de l'archive).
+
+À vérifier avant : Kitware et (si `CLANG_SOURCE=llvm`) `apt.llvm.org` publient
+bien le codename de la distro.
 
 ### 6.3 Template minimal
 
@@ -281,16 +300,13 @@ En plus des étapes ci-dessus :
 ```bash
 #!/usr/bin/env bash
 set -e
+export GCC_VERSION=NN
+export CLANG_VERSION=NN
+export CLANG_SOURCE=llvm     # ou 'distro' si la distro ship la bonne version
 bash /tmp/install/_common/builder.sh
-. /tmp/install/_common/helpers.sh
-
-update_package_list
-install_package g++-NN
-update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-NN NN
-clear_cache
 ```
 
-**Devel** (pour un builder gcc — tout est déjà dans le commun) :
+**Devel** :
 
 ```bash
 #!/usr/bin/env bash
@@ -321,36 +337,7 @@ Pièges connus :
 
 ---
 
-## 8. Outils auxiliaires
-
-### `run_docker_build.sh`
-
-Wrapper `docker run` optimisé (tmpfs, cache depmanager persistant, seccomp relâché,
-tunables glibc). Variables d'env : `PLATFORM`, `IMAGE`, `CMD`, `DM_CACHE`, `TMPFS_SIZE`.
-
-### `run_docker_bench.py`
-
-Microbench Python qui compare stabilité (`sh`/`bash`/`python3`) et perf
-(sh loop, fork/exec, Python startup, compile C) d'une liste d'images en amd64
-natif vs arm64 émulé. Ratios calculés automatiquement :
-
-- **amd64** : rapport au host natif (overhead Docker).
-- **arm64** : rapport à la même image en amd64 (overhead QEMU pur).
-
-```bash
-./run_docker_bench.py                                     # images par défaut
-./run_docker_bench.py ubuntu:24.04 debian:bookworm-slim   # images custom
-./run_docker_bench.py --stability-only                    # skip perf
-./run_docker_bench.py --json results.json                 # export JSON
-```
-
-Options CLI complètes : `./run_docker_bench.py --help`. Les variables d'env
-`BENCH_PLATFORMS`, `BENCH_TIMEOUT`, `BENCH_PULL`, `BENCH_STABILITY_ONLY`,
-`BENCH_PERF_ONLY` sont acceptées pour compat avec l'ancien script bash.
-
----
-
-## 9. Pré-requis hôte
+## 8. Pré-requis hôte
 
 Pour builder multi-arch sur une machine amd64 :
 
@@ -370,16 +357,20 @@ Sur l'hôte CI TeamCity (DinD), les réglages kernel doivent être faits sur la 
 
 ---
 
-## 10. Dépannage
+## 9. Dépannage
 
 | Problème                                                | Piste                                                          |
 |---------------------------------------------------------|----------------------------------------------------------------|
 | `Unsupported platform linux/arm64`                      | `docker buildx create --use --driver docker-container`         |
 | `docker pull ... denied` sur image interne              | `docker login registry.argawaen.net`                           |
-| `exec format error` au `RUN bash /tmp/install/...`      | `binfmt_misc` pas activé côté hôte (cf §9)                     |
+| `exec format error` au `RUN bash /tmp/install/...`      | `binfmt_misc` pas activé côté hôte (cf §8)                     |
 | Un `-dev` manque au build                               | Le builder parent l'installe-t-il ? (cf `_common/builder.sh`)  |
 | Une devel plante car le parent builder n'existe pas     | Ordre dans `all_ci.sh` : base → builder → devel                |
 | Un `.sh` ne trouve pas `/tmp/install/_common/...`       | Le `Dockerfile` doit copier `install/` entier (pas juste un script) |
+| `GCC_VERSION must be set by the caller`                 | `_common/builder.sh` appelé sans les `export` du script de couche |
+| `GCC_VERSION not set and /etc/ci-toolchain.env unusable` | Un `devel/*` construit sur autre chose qu'un `builder-*`         |
+| `gcc --version` ≠ `g++ --version` dans une image        | Un paquet a tiré le méta `gcc` : rappeler `register_gcc_alternatives` en fin de script |
+| `lookup ... i/o timeout` pendant un buildx build        | Le conteneur builder `docker-container` a un resolver mort : `docker buildx rm <nom> && docker buildx create --use --driver docker-container` |
 
 Pour tout autre problème, consulter `BUGS.md` (audit statique) et
 `BENCHMARK_arm64_emulation.md` (roadmap perf).
