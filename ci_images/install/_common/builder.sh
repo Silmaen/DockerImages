@@ -34,10 +34,11 @@ install_package cmake cmake-data make ninja-build ccache mold patchelf \
                 doxygen graphviz pkg-config time
 
 # Development headers for libs the projects commonly link against
-install_package libx11-dev libgtk-3-dev libssl-dev
-# Full X11/XCB development set, as expected by Conan's xorg/system recipe, plus the
-# Wayland headers and xkb-data. Required to build the Vulkan loader with every WSI
-# backend (xlib, xcb, wayland) and xkbcommon with X11 support.
+install_package libgtk-3-dev libssl-dev
+# Full X11/XCB development set, as expected by Conan's xorg/system recipe.
+# Required to build the Vulkan loader with every WSI backend (xlib, xcb,
+# wayland) and xkbcommon with X11 support. The matching runtime libraries are
+# installed by the base layer — keep the two lists in sync.
 install_package libx11-dev libx11-xcb-dev libxcb1-dev libfontenc-dev libice-dev libsm-dev \
                 libxau-dev libxaw7-dev libxcomposite-dev libxcursor-dev libxdamage-dev \
                 libxdmcp-dev libxext-dev libxfixes-dev libxi-dev libxinerama-dev \
@@ -49,7 +50,9 @@ install_package libxcb-glx0-dev libxcb-render0-dev libxcb-render-util0-dev libxc
                 libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xinerama0-dev \
                 libxcb-dri3-dev libxcb-cursor-dev libxcb-dri2-0-dev libxcb-present-dev \
                 libxcb-composite0-dev libxcb-ewmh-dev libxcb-res0-dev libxcb-util-dev
-install_package libwayland-dev xkb-data
+# Wayland + libdecor headers. xkb-data is runtime data and comes from the base
+# layer, nothing to add here.
+install_package libwayland-dev libdecor-0-dev
 install_package libasound2-dev libpulse-dev libpipewire-0.3-dev libjack-dev \
                 portaudio19-dev libmysofa-dev libsndfile1-dev
 install_package libvulkan-dev vulkan-validationlayers libglfw3-dev

@@ -17,10 +17,12 @@ image par couche et par distro** :
 
 1. **base** — environnement de **run**. Python, poetry, libs runtime (**aucun
    `-dev`**), utilitaires shell. Aucun compilateur, aucun outil de build.
+   Contient **toute la suite X11/XCB runtime** + le runtime Wayland,
+   `xkb-data` et `libdecor-0-0`, en miroir de la liste `-dev` du builder.
 2. **builder** — **L'**environnement de build (CI). Contient **les deux**
    toolchains (gcc stock + clang) + `cmake`, `ninja`, `make`, `ccache`, `mold`,
-   `patchelf`, `doxygen`, `graphviz`, `pkg-config`, **toutes** les libs `-dev`,
-   repo Kitware. Un job CI choisit son compilateur via `CC`/`CXX`, pas via
+   `patchelf`, `doxygen`, `graphviz`, `pkg-config`, **toutes** les libs `-dev`
+   (X11/XCB complet, `libwayland-dev`, `libdecor-0-dev`), repo Kitware. Un job CI choisit son compilateur via `CC`/`CXX`, pas via
    l'image.
 3. **devel** — environnement **dev local**. Le builder **plus** la suite de
    debug/analyse (`gdb`, `lldb-N`, `valgrind`, `strace`, `ltrace`, `gperf`,

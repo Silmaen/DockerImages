@@ -33,10 +33,29 @@ install_package python3 python3-pip python3-future python3-lxml python3-jinja2 \
 # package pulling 7zip, which is fine: `7z` ends up available either way).
 install_package git p7zip-full unzip time
 
-# Runtime libraries (GUI, sound, Vulkan). t64-suffixed names on 24.04.
-# libdecor is dlopened by glfw to decorate its windows on Wayland: without it a
-# Wayland window has no title bar at all.
-install_package libx11-6 libdecor-0-0 libgtk-3-0t64 libssl3t64 \
+# Full X11/XCB runtime set — mirrors the -dev list of _common/builder.sh
+# (Conan's xorg/system recipe expects the whole suite). Keep both lists in sync.
+install_package libx11-6 libx11-xcb1 libxcb1 libfontenc1 libice6 libsm6 \
+                libxau6 libxaw7 libxcomposite1 libxcursor1 libxdamage1 \
+                libxdmcp6 libxext6 libxfixes3 libxi6 libxinerama1 \
+                libxkbfile1 libxmu6 libxmuu1 libxpm4 libxrandr2 \
+                libxrender1 libxres1 libxss1 libxt6t64 libxtst6 libxv1 \
+                libxxf86vm1 libuuid1
+install_package libxcb-glx0 libxcb-render0 libxcb-render-util0 libxcb-xkb1 \
+                libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+                libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 \
+                libxcb-dri3-0 libxcb-cursor0 libxcb-dri2-0 libxcb-present0 \
+                libxcb-composite0 libxcb-ewmh2 libxcb-res0 libxcb-util1
+
+# Wayland runtime + xkb-data (arch-independent keymap data, needed at runtime by
+# xkbcommon) + libdecor, which glfw dlopens to decorate its Wayland windows:
+# without it a Wayland window has no title bar at all.
+install_package libwayland-client0 libwayland-cursor0 libwayland-egl1 \
+                libwayland-server0 xkb-data libdecor-0-0
+
+# Remaining runtime libraries (GUI toolkit, TLS, sound, Vulkan). t64-suffixed
+# names on 24.04. The -dev counterparts are added by the builder layer.
+install_package libgtk-3-0t64 libssl3t64 \
                 libasound2t64 libpulse0 libpipewire-0.3-0 libjack-jackd2-0 \
                 libportaudio2 libmysofa1 libsndfile1 \
                 libvulkan1 vulkan-tools mesa-vulkan-drivers libglfw3

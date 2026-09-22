@@ -102,6 +102,22 @@ Les versions correspondent aux tags de release (si / quand des tags sont posés)
 
 ### Added (2026-09-22)
 
+- **Suite X11/XCB complète côté runtime dans `base/*.sh`** (les trois distros),
+  en miroir exact de la liste `-dev` de `_common/builder.sh` : `libx11-xcb1`,
+  `libxcb1`, `libfontenc1`, `libice6`, `libsm6`, `libxau6`, `libxaw7`,
+  `libxcomposite1`, `libxcursor1`, `libxdamage1`, `libxdmcp6`, `libxext6`,
+  `libxfixes3`, `libxi6`, `libxinerama1`, `libxkbfile1`, `libxmu6`, `libxmuu1`,
+  `libxpm4`, `libxrandr2`, `libxrender1`, `libxres1`, `libxss1`, `libxt6`
+  (`libxt6t64` sur 24.04 / 26.04), `libxtst6`, `libxv1`, `libxxf86vm1`,
+  `libuuid1`, et les 20 `libxcb-*` correspondants.
+- **Runtime Wayland + `xkb-data` + `libdecor-0-0` dans `base/*.sh`** :
+  `libwayland-client0`, `libwayland-cursor0`, `libwayland-egl1`,
+  `libwayland-server0`. `xkb-data` quitte le builder (c'est de la donnée
+  runtime) et `libdecor-0-0` est désormais présent sur **22.04** aussi (il n'y
+  était pas).
+- **`libdecor-0-dev` ajouté à `_common/builder.sh`**, à côté de
+  `libwayland-dev`. Retrait du `libx11-dev` en double.
+
 - **Famille Ubuntu 26.04** (`resolute`) : `base-ubuntu2604`,
   `builder-ubuntu2604`, `devel-ubuntu2604`. Toolchains : **gcc-15** (stock
   main) + **clang-22 pris dans universe** — 26.04 ship clang 22.1, donc

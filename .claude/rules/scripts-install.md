@@ -33,6 +33,7 @@ set -e
 # 1. Timezone
 # 2. setup_default_user   (crée ou renomme `user`, le Dockerfile finit USER user)
 # 3. apt install : RUNTIME libs (sans -dev) + python + poetry + archive tools
+#    dont toute la suite X11/XCB + Wayland, xkb-data, libdecor-0-0
 # 4. locale-gen
 # 5. clear_cache
 ```
@@ -94,6 +95,10 @@ réaffirmé correspondent bien au builder.
 - La libstdc++ contre laquelle clang link est `STDCPP_VER`, qui vaut par défaut
   `GCC_VERSION`. **Ne pas** la déduire de `dpkg -s libstdc++6` : sur 26.04 ce
   paquet vient d'un snapshot gcc-16 alors que le gcc stock est 15.
+- **Les listes X11/XCB de `base/*.sh` et `_common/builder.sh` sont un miroir
+  l'une de l'autre** (runtime ↔ `-dev`, même ordre). Ajouter un `-dev` au
+  builder sans son runtime dans les trois `base/*.sh` donne un build qui passe
+  et une exécution qui casse sur `.so` manquant.
 - Ne pas réinstaller les outils déjà posés par `_common/builder.sh`. Ne pas réajouter
   `apt.llvm.org` ou Kitware dans un script qui le reçoit déjà via son parent —
   c'est notamment le cas de `devel/*` pour `lldb-N`.

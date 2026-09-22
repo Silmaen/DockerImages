@@ -27,8 +27,8 @@ d'installation** sélectionné par un paramètre — l'ensemble est orchestré p
 
 | Couche    | Rôle                                                   | Contenu typique                                                                                   |
 |-----------|--------------------------------------------------------|---------------------------------------------------------------------------------------------------|
-| `base`    | **Run** : exécuter l'application + ses tests           | Python, `poetry`, libs runtime (**aucun `-dev`**, aucun compilateur), outils d'archive, `git`, locale, utilisateur `user` |
-| `builder` | **CI / build** : *l'*environnement de compilation      | `base` + **les deux** toolchains (gcc stock **et** clang-22) + `cmake`, `ninja`, `make`, `ccache`, `mold`, `patchelf`, `doxygen`, `pkg-config` + **toutes** les libs `-dev` |
+| `base`    | **Run** : exécuter l'application + ses tests           | Python, `poetry`, **toute la suite runtime X11/XCB + Wayland** (`xkb-data`, `libdecor-0-0`), GTK/TLS/son/Vulkan — **aucun `-dev`**, aucun compilateur — outils d'archive, `git`, locale, utilisateur `user` |
+| `builder` | **CI / build** : *l'*environnement de compilation      | `base` + **les deux** toolchains (gcc stock **et** clang-22) + `cmake`, `ninja`, `make`, `ccache`, `mold`, `patchelf`, `doxygen`, `pkg-config` + **toutes** les libs `-dev` (X11/XCB complet, `libwayland-dev`, `libdecor-0-dev`, son, Vulkan) |
 | `devel`   | **Poste dev** : builder + outillage de debug / analyse | `builder` + `gdb`, `lldb-22`, `valgrind`, `strace`, `ltrace`, `gperf`, `lcov`, `cppcheck`, `bear`, `perf`, `tmux`, `less`, `vim`, `htop`, `git-lfs` |
 
 Une **seule** image par couche et par distro : `base-<distro>` → `builder-<distro>`
@@ -365,6 +365,7 @@ Sur l'hôte CI TeamCity (DinD), les réglages kernel doivent être faits sur la 
 | `docker pull ... denied` sur image interne              | `docker login registry.argawaen.net`                           |
 | `exec format error` au `RUN bash /tmp/install/...`      | `binfmt_misc` pas activé côté hôte (cf §8)                     |
 | Un `-dev` manque au build                               | Le builder parent l'installe-t-il ? (cf `_common/builder.sh`)  |
+| Un `.so` manque à l'exécution mais le build passait     | Le `-dev` est dans `builder.sh` sans son runtime dans `base/*.sh` — les deux listes X11/XCB doivent rester alignées |
 | Une devel plante car le parent builder n'existe pas     | Ordre dans `all_ci.sh` : base → builder → devel                |
 | Un `.sh` ne trouve pas `/tmp/install/_common/...`       | Le `Dockerfile` doit copier `install/` entier (pas juste un script) |
 | `GCC_VERSION must be set by the caller`                 | `_common/builder.sh` appelé sans les `export` du script de couche |
