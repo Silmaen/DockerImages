@@ -54,6 +54,16 @@ install_package libxcb-glx0 libxcb-render0 libxcb-render-util0 libxcb-xkb1 \
 install_package libwayland-client0 libwayland-cursor0 libwayland-egl1 \
                 libwayland-server0 xkb-data libdecor-0-0
 
+# Headless X server for GUI tests in CI: `xvfb-run ./tests`. xauth is what
+# xvfb-run uses to set up the display cookie — spelled out so it never depends
+# on recommends. x11-utils brings xdpyinfo / xwininfo / xprop, to inspect the
+# display from a test script.
+install_package xvfb xauth x11-utils
+
+# libdecor-0-0 alone draws nothing: the decorations come from a plugin. The gtk
+# one matches the libgtk-3 already installed below.
+install_package libdecor-0-plugin-1-gtk
+
 # OpenGL / EGL / GLES / GBM runtime. glfw and the Vulkan loader dlopen
 # libEGL.so.1 and libGL.so.1 at runtime, and the Wayland backend goes through
 # EGL + GBM. Without these, a binary that links or dlopens them builds fine in

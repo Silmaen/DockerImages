@@ -5,6 +5,10 @@ Les versions correspondent aux tags de release (si / quand des tags sont posés)
 
 ## [Unreleased]
 
+### Changed (2026-09-23)
+
+- **`LC_CTYPE=en_US.UTF-8` dans le `Dockerfile`**, `LC_ALL` retiré (il écrasait `LC_CTYPE`) ; `LANG` reste `C.UTF-8`.
+
 ### Changed (2026-09-22) — refactor des trois couches
 
 - **`builder` devient *l'*environnement de build complet** : une **seule**
@@ -107,6 +111,8 @@ Les versions correspondent aux tags de release (si / quand des tags sont posés)
 
 ### Added (2026-09-22)
 
+- **`xvfb`, `xauth`, `x11-utils` dans `base/*.sh`** (les trois distros) : serveur X headless pour les tests GUI en CI via `xvfb-run`, plus `xdpyinfo` / `xwininfo` / `xprop`.
+- **Plugin libdecor dans `base/*.sh`** : `libdecor-0-plugin-1-gtk` (24.04, 26.04), `libdecor-0-plugin-1-cairo` (22.04, seul disponible) — sans plugin, les fenêtres Wayland n'ont pas de décorations.
 - **Suite X11/XCB complète côté runtime dans `base/*.sh`** (les trois distros),
   en miroir exact de la liste `-dev` de `_common/builder.sh` : `libx11-xcb1`,
   `libxcb1`, `libfontenc1`, `libice6`, `libsm6`, `libxau6`, `libxaw7`,
