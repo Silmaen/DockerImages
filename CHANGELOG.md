@@ -8,6 +8,7 @@ Les versions correspondent aux tags de release (si / quand des tags sont posés)
 ### Added (2026-10-07)
 
 - **`weston`, `xwayland`, `wayland-utils`, `mesa-utils` dans `base/*.sh`** (les trois distros, sans `wayland-utils` absent de 22.04) : compositeur Wayland headless pour les tests GUI en CI (`weston --backend=headless`), plus `wayland-info` / `eglinfo` / `glxinfo` pour le diagnostic.
+- **`libpipewire-0.3-common` dans `base/*.sh`** : la configuration client PipeWire (`client.conf`) ; sans elle OpenAL Soft ne crée pas son contexte PipeWire et se rabat sur PulseAudio.
 - **Alternatives `llvm-ar` et `llvm-ranlib`** dans `_common/clang.sh` : un cache CMake configuré hors de l'image qui a retenu `/usr/bin/llvm-ar` se construit aussi dans l'image.
 
 ### Changed (2026-09-23)
