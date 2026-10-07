@@ -55,6 +55,12 @@ install_package libwayland-client0 libwayland-cursor0 libwayland-egl1 \
 # display from a test script.
 install_package xvfb xauth x11-utils
 
+# Headless Wayland compositor for GUI tests in CI: `weston --backend=headless
+# --socket=wayland-ci &` then WAYLAND_DISPLAY=wayland-ci ./tests. xwayland lets
+# the same compositor serve X11 clients; mesa-utils brings glxinfo. 22.04 has no
+# wayland-utils package (wayland-info), and its mesa-utils 8.4 has no eglinfo.
+install_package weston xwayland mesa-utils
+
 # libdecor-0-0 alone draws nothing: the decorations come from a plugin. 22.04
 # ships libdecor 0.1.0, which only has the cairo plugin.
 install_package libdecor-0-plugin-1-cairo

@@ -82,5 +82,9 @@ update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${CLANG_
 update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${CLANG_VERSION} ${CLANG_VERSION}
 update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${CLANG_VERSION} ${CLANG_VERSION}
 update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-${CLANG_VERSION} ${CLANG_VERSION}
+# Archiver of LTO builds: CMake records the unversioned path (CMAKE_<LANG>_COMPILER_AR) when it first finds one,
+# e.g. on a host configure, and a build in the image then fails with "/usr/bin/llvm-ar: not found".
+update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-${CLANG_VERSION} ${CLANG_VERSION}
+update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-${CLANG_VERSION} ${CLANG_VERSION}
 
 clear_cache

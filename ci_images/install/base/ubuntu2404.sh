@@ -59,6 +59,12 @@ install_package libwayland-client0 libwayland-cursor0 libwayland-egl1 \
 # display from a test script.
 install_package xvfb xauth x11-utils
 
+# Headless Wayland compositor for GUI tests in CI: `weston --backend=headless
+# --socket=wayland-ci &` then WAYLAND_DISPLAY=wayland-ci ./tests. xwayland lets
+# the same compositor serve X11 clients; wayland-utils brings wayland-info and
+# mesa-utils eglinfo / glxinfo, to inspect the display and the driver picked.
+install_package weston xwayland wayland-utils mesa-utils
+
 # libdecor-0-0 alone draws nothing: the decorations come from a plugin. The gtk
 # one matches the libgtk-3 already installed below.
 install_package libdecor-0-plugin-1-gtk
