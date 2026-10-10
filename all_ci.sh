@@ -36,3 +36,10 @@ set -e
 ./generator.py --preset base-ubuntu2604 --push --alias-latest
 ./generator.py --preset builder-ubuntu2604 --push --alias-latest
 ./generator.py --preset devel-ubuntu2604 --push --alias-latest
+
+# ============================================================
+# Cross arm64 (hôte amd64) — builder-ubuntu2604 + sysroot arm64 du même builder.
+# Après builder-ubuntu2604 : il copie ses deux archs.
+# ============================================================
+
+./generator.py --preset builder-cross-arm64-ubuntu2604 --push --alias-latest

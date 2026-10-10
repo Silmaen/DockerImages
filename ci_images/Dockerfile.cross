@@ -1,0 +1,21 @@
+# Cross-compilation image: the host builder plus, under ${SYSROOT}, the full
+# filesystem of the same builder for the target arch — headers, -dev libs and
+# the target's own gcc runtime files, already consistent with each other.
+# Built for the host platform only; the target stage is only copied from, no
+# RUN executes in it, so no emulation is needed.
+ARG BASE_IMAGE="ubuntu"
+ARG TARGET_PLATFORM="linux/arm64"
+FROM --platform=${TARGET_PLATFORM} ${BASE_IMAGE} AS target
+
+FROM ${BASE_IMAGE}
+
+USER root
+
+ARG SETUP
+ARG SYSROOT=/opt/sysroot/aarch64-linux-gnu
+COPY --from=target / ${SYSROOT}/
+COPY install/ /tmp/install/
+RUN SYSROOT=${SYSROOT} bash /tmp/install/${SETUP}.sh && rm -rf /tmp/install
+ENV OWL_SYSROOT=${SYSROOT}
+
+USER user

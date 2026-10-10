@@ -14,12 +14,13 @@ root_path = Path(__file__).resolve().parent
 ci_images_path = root_path / "ci_images"
 
 def _preset(image_name: str, base: str, setup: str,
-            platforms=("linux/amd64", "linux/arm64")):
+            platforms=("linux/amd64", "linux/arm64"), dockerfile="Dockerfile"):
     """Helper to keep the presets dict concise.
 
     If `base` looks like an internal short name (no ``:`` tag, no ``/`` path
     component), prepend the internal registry + namespace. Otherwise treat it
     as a fully-qualified reference (e.g. ``ubuntu:24.04``).
+    ``dockerfile`` is relative to the build context (``location``).
     """
     if "/" not in base and ":" not in base:
         base = f"{registry}/{namespace}/{base}"
@@ -29,6 +30,7 @@ def _preset(image_name: str, base: str, setup: str,
         "image_name": image_name,
         "platform": list(platforms),
         "location": ci_images_path,
+        "dockerfile": dockerfile,
     }
 
 
@@ -67,6 +69,12 @@ presets = {
         _preset("builder-ubuntu2604", "base-ubuntu2604",      "builder/ubuntu2604"),
     "devel-ubuntu2604":
         _preset("devel-ubuntu2604",   "builder-ubuntu2604",   "devel/ubuntu2604"),
+
+    # CROSS — builder amd64 + sysroot arm64 (le builder du même Ubuntu, copié
+    # sous /opt/sysroot/aarch64-linux-gnu). Construit pour l'hôte seulement.
+    "builder-cross-arm64-ubuntu2604":
+        _preset("builder-cross-arm64-ubuntu2604", "builder-ubuntu2604", "cross/sysroot",
+                platforms=("linux/amd64",), dockerfile="Dockerfile.cross"),
 }
 
 
@@ -215,6 +223,7 @@ def process(
     do_push: bool,
     aliased: bool,
     dockerfile_path: Path,
+    dockerfile: str = "Dockerfile",
 ):
     """
     Process the docker build command.
@@ -225,7 +234,8 @@ def process(
     :param platforms: The platform to use.
     :param do_push: If we push image to registry.
     :param aliased: If we alias the image to latest.
-    :param dockerfile_path: Path to the Dockerfile to use.
+    :param dockerfile_path: Path to the build context.
+    :param dockerfile: Dockerfile name, relative to the build context.
     :raise CommandError: The build failed.
     """
     # force re-pull base image (in case of updates) ; tolerate failure so that
@@ -246,7 +256,8 @@ def process(
     b_args = f"--build-arg BASE_IMAGE={base} --build-arg SETUP={setup}"
     if do_push:
         b_args += " --push"
-    cmd = f"docker buildx build --progress=plain {plat}{b_args}{image_tags} {dockerfile_path}"
+    cmd = (f"docker buildx build --progress=plain {plat}{b_args}{image_tags}"
+           f" -f {dockerfile_path / dockerfile} {dockerfile_path}")
     run_command(cmd)
 
 
@@ -338,6 +349,7 @@ def main():
     platforms = []
     tag = ""
     location = ci_images_path
+    dockerfile = "Dockerfile"
 
     if args.all_preset:
         if args.preset not in [None, ""] or args.base_image not in [None, ""] or args.setup_file not in [None, ""] or args.image_name not in [None, ""]:
@@ -352,6 +364,7 @@ def main():
             setup = presets[args.preset]["setup"]
             output = presets[args.preset]["image_name"]
             platforms = presets[args.preset]["platform"]
+            dockerfile = presets[args.preset]["dockerfile"]
             if presets[args.preset]["location"].resolve().exists():
                 location = presets[args.preset]["location"].resolve()
         else:
@@ -413,9 +426,10 @@ def main():
             output = presets[preset]["image_name"]
             platforms = presets[preset]["platform"]
             location = presets[preset]["location"].resolve()
-            process(base_image, setup, output, tag, platforms, True, True, location)
+            dockerfile = presets[preset]["dockerfile"]
+            process(base_image, setup, output, tag, platforms, True, True, location, dockerfile)
     else:
-        process(base_image, setup, output, tag, platforms, do_push, aliased, location)
+        process(base_image, setup, output, tag, platforms, do_push, aliased, location, dockerfile)
     if args.full_clean or args.clean:
         clean_docker_build()
     return 0

@@ -195,6 +195,19 @@ Le choix se fait dans `install/builder/<distro>.sh` via trois variables
 (`GCC_VERSION`, `CLANG_VERSION`, `CLANG_SOURCE`) — aucun autre endroit à
 toucher.
 
+### 4.1 bis Image de compilation croisée arm64
+
+`builder-cross-arm64-ubuntu2604` (amd64 seulement) = `builder-ubuntu2604` amd64
+plus le système de fichiers complet de `builder-ubuntu2604` arm64 sous
+`/opt/sysroot/aarch64-linux-gnu` (variable `OWL_SYSROOT`, ~2,6 Go). Les
+symlinks absolus de la sysroot sont rendus relatifs (`install/cross/sysroot.sh`).
+Construite via `ci_images/Dockerfile.cross` (clé `dockerfile` du preset), sans
+émulation : l'étage arm64 est seulement copié.
+
+```bash
+clang++ --target=aarch64-linux-gnu --sysroot="$OWL_SYSROOT" -fuse-ld=lld …
+```
+
 ### 4.2 Portabilité runtime — garantie
 
 | Distro builder | libstdc++ linkée à la compilation | libstdc++6 stock du runtime | Compat |

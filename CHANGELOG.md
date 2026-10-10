@@ -5,6 +5,12 @@ Les versions correspondent aux tags de release (si / quand des tags sont posés)
 
 ## [Unreleased]
 
+### Added (2026-10-10)
+
+- **Preset `builder-cross-arm64-ubuntu2604`** (amd64 seul, `Dockerfile.cross` + `cross/sysroot.sh`) : `builder-ubuntu2604` avec la sysroot arm64 du même builder sous `/opt/sysroot/aarch64-linux-gnu` (`OWL_SYSROOT`), symlinks absolus rendus relatifs, pour compiler en croisé avec clang sans émulation.
+- **`pipewire-bin` et `libpipewire-0.3-modules` dans `_common/devel.sh`** : un serveur PipeWire peut tourner dans les images devel.
+- **Clé `dockerfile` dans `_preset`** (`generator.py`) : un preset peut utiliser un autre Dockerfile du contexte, passé par `-f`.
+
 ### Added (2026-10-07)
 
 - **`weston`, `xwayland`, `wayland-utils`, `mesa-utils` dans `base/*.sh`** (les trois distros, sans `wayland-utils` absent de 22.04) : compositeur Wayland headless pour les tests GUI en CI (`weston --backend=headless`), plus `wayland-info` / `eglinfo` / `glxinfo` pour le diagnostic.
