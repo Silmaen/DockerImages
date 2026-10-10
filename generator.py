@@ -78,6 +78,21 @@ presets = {
 }
 
 
+def filter_presets(patterns: str):
+    """Names of the presets matching a comma-separated list of patterns.
+
+    A pattern without wildcard matches as a substring (``2604`` selects every
+    Ubuntu 26.04 preset), otherwise as an fnmatch glob (``base-*``). Several
+    patterns are OR-ed. The dict order is kept, so base -> builder -> devel
+    still holds within the selection.
+    """
+    from fnmatch import fnmatch
+
+    pats = [p.strip() for p in patterns.split(",") if p.strip()]
+    pats = [p if any(c in p for c in "*?[") else f"*{p}*" for p in pats]
+    return [name for name in presets if any(fnmatch(name, p) for p in pats)]
+
+
 class CommandError(RuntimeError):
     """A command run through :func:`run_command` failed.
 
@@ -315,6 +330,11 @@ def main():
         default=False, help="Build all known presets, also implies '--push and '--alias-latest'."
     )
     parser.add_argument(
+        "--filter", type=str, default="",
+        help="Restrict '--all-preset' (implied) to the presets matching these comma-separated "
+             "patterns: substring ('2604') or glob ('base-*').",
+    )
+    parser.add_argument(
         "--push",
         action="store_true",
         default=False,
@@ -351,6 +371,14 @@ def main():
     location = ci_images_path
     dockerfile = "Dockerfile"
 
+    selected = list(presets.keys())
+    if args.filter not in [None, ""]:
+        args.all_preset = True
+        selected = filter_presets(args.filter)
+        if len(selected) == 0:
+            print(f"ERROR: no preset matches '{args.filter}', possible are:", file=stderr)
+            print("\n".join(presets.keys()), file=stderr)
+            return -1
     if args.all_preset:
         if args.preset not in [None, ""] or args.base_image not in [None, ""] or args.setup_file not in [None, ""] or args.image_name not in [None, ""]:
             print("ERROR: --all-preset cannot be used with other image selection options.", file=stderr)
@@ -419,7 +447,8 @@ def main():
         clean_docker_build()
     start_builder()
     if args.all_preset:
-        for preset in presets.keys():
+        print(f"Presets selected: {', '.join(selected)}")
+        for preset in selected:
             print(f"Processing preset '{preset}'...")
             base_image = presets[preset]["base_image"]
             setup = presets[preset]["setup"]

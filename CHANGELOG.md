@@ -11,6 +11,7 @@ Les versions correspondent aux tags de release (si / quand des tags sont posés)
 
 ### Added (2026-10-10)
 
+- **Option `--filter` de `generator.py`** : reconstruit seulement les presets correspondants (`--filter 2604`, `--filter 'base-*,devel-*'`), dans l'ordre de la chaîne.
 - **Preset `builder-cross-arm64-ubuntu2604`** (amd64 seul, `Dockerfile.cross` + `cross/sysroot.sh`) : `builder-ubuntu2604` avec la sysroot arm64 du même builder sous `/opt/sysroot/aarch64-linux-gnu` (`OWL_SYSROOT`), symlinks absolus rendus relatifs, pour compiler en croisé avec clang sans émulation.
 - **Clé `dockerfile` dans `_preset`** (`generator.py`) : un preset peut utiliser un autre Dockerfile du contexte, passé par `-f`.
 

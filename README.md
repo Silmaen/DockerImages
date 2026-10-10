@@ -254,6 +254,7 @@ préfixe avec `registry/namespace`. Sinon il est laissé tel quel (`ubuntu:24.04
 | `--dry-run`                | Affiche les commandes sans exécuter                         |
 | `--clean` / `--full-clean` | Nettoie le cache docker                                     |
 | `--all-preset`             | Enchaîne tous les presets (implique `--push --alias-latest`) |
+| `--filter <motifs>`        | Restreint `--all-preset` (impliqué) aux presets correspondants : sous-chaîne (`2604`) ou glob (`base-*`), séparés par des virgules |
 
 ### 5.3 Cycle de vie d'un build
 
