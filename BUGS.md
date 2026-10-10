@@ -22,6 +22,10 @@ Derniers résolus (cf `git log`) :
   `lcov` dépend du méta-paquet `gcc` non versionné, qui écrase `/usr/bin/gcc`.
   Les alternatives sont désormais réaffirmées (`--force`) en fin de
   `_common/devel.sh`.
+- **B-18** — `base/*.sh` installait `libpipewire-0.3-0` et sa `client.conf`
+  sans `libpipewire-0.3-modules` : les modules que `client.conf` charge
+  (`protocol-native`…) manquaient, aucun client PipeWire ne pouvait se
+  connecter. Ajouté, avec `pipewire-bin` pour lancer un serveur en conteneur.
 
 ---
 

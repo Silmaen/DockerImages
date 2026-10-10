@@ -5,10 +5,13 @@ Les versions correspondent aux tags de release (si / quand des tags sont posés)
 
 ## [Unreleased]
 
+### Fixed (2026-10-10)
+
+- **`libpipewire-0.3-modules` et `pipewire-bin` dans `base/*.sh`** : sans les modules (`protocol-native`, `client-node`…) un client PipeWire ne pouvait se connecter à aucun serveur ; le démon permet d'en lancer un dans le conteneur (fix B-18).
+
 ### Added (2026-10-10)
 
 - **Preset `builder-cross-arm64-ubuntu2604`** (amd64 seul, `Dockerfile.cross` + `cross/sysroot.sh`) : `builder-ubuntu2604` avec la sysroot arm64 du même builder sous `/opt/sysroot/aarch64-linux-gnu` (`OWL_SYSROOT`), symlinks absolus rendus relatifs, pour compiler en croisé avec clang sans émulation.
-- **`pipewire-bin` et `libpipewire-0.3-modules` dans `_common/devel.sh`** : un serveur PipeWire peut tourner dans les images devel.
 - **Clé `dockerfile` dans `_preset`** (`generator.py`) : un preset peut utiliser un autre Dockerfile du contexte, passé par `-f`.
 
 ### Added (2026-10-07)

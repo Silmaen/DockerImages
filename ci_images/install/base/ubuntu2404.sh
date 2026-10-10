@@ -80,12 +80,16 @@ install_package libgl1 libglx0 libglvnd0 libegl1 libegl-mesa0 libgles2 \
 # Remaining runtime libraries (GUI toolkit, TLS, sound, Vulkan). t64-suffixed
 # names on 24.04. The -dev counterparts are added by the builder layer.
 install_package libgtk-3-0t64 libssl3t64 \
-                libasound2t64 libpulse0 libpipewire-0.3-0 libpipewire-0.3-common libjack-jackd2-0 \
+                libasound2t64 libpulse0 libpipewire-0.3-0 libpipewire-0.3-common libpipewire-0.3-modules \
+                libjack-jackd2-0 pipewire-bin \
                 libportaudio2 libmysofa1 libsndfile1 \
                 libvulkan1 vulkan-tools mesa-vulkan-drivers libglfw3
 
 # libpipewire-0.3-common holds /usr/share/pipewire/client.conf: without it a PipeWire client (OpenAL Soft)
 # cannot create its context and falls back to PulseAudio with "Failed to create PipeWire event context".
+# libpipewire-0.3-modules holds the modules client.conf loads (protocol-native, client-node, adapter):
+# without them no client can connect, even to a host server. pipewire-bin is the daemon, to run a server
+# in the container for headless audio tests.
 
 # Poetry — lives in /usr/poetry (referenced by Dockerfile's ENV PATH)
 curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/poetry python3 -

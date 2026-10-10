@@ -39,10 +39,6 @@ update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-${CLANG_VERSION} 
 # already provided by the builder layer through _common/clang.sh).
 install_package cppcheck bear
 
-# PipeWire daemon and its modules: base only ships the client side, enough to
-# talk to a host server but not to run one inside the container.
-install_package pipewire-bin libpipewire-0.3-modules
-
 # Shell quality-of-life for interactive use
 install_package tmux less vim htop git-lfs
 
