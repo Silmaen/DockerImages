@@ -85,7 +85,8 @@ Debian). Sur 24.04 host avec QEMU 8.2.2, bash crashe sur les images glibc
 ├── generator.py              # wrapper docker buildx
 ├── all_ci.sh                 # build + push la totalité des presets
 ├── ci_images/
-│   ├── Dockerfile            # UN SEUL Dockerfile, ARG BASE_IMAGE + ARG SETUP
+│   ├── Dockerfile            # Dockerfile commun, ARG BASE_IMAGE + ARG SETUP
+│   ├── Dockerfile.cross      # cross arm64 : builder hôte + sysroot arm64 (preset builder-cross-*)
 │   └── install/
 │       ├── _common/          # scripts partagés
 │       │   ├── helpers.sh    # fonctions bash communes
@@ -95,7 +96,8 @@ Debian). Sur 24.04 host avec QEMU 8.2.2, bash crashe sur les images glibc
 │       │   └── devel.sh      # outillage debug/analyse pour TOUS les devel/*.sh
 │       ├── base/             # couche runtime (ubuntu2204/2404/2604.sh)
 │       ├── builder/          # ubuntu2204/2404/2604.sh — 3 export + builder.sh
-│       └── devel/            # ubuntu2204/2404/2604.sh — appellent devel.sh
+│       ├── devel/            # ubuntu2204/2404/2604.sh — appellent devel.sh
+│       └── cross/            # sysroot.sh — finalise la sysroot copiée (symlinks relatifs)
 ├── README.md                 # doc utilisateur (Mermaid + guides)
 ├── BUGS.md                   # audit statique (OUVERT / RÉSOLU)
 ├── CLAUDE.md                 # ce fichier
